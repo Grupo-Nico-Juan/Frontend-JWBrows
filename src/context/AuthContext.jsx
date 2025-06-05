@@ -1,4 +1,3 @@
-export default axiosInstance;
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -10,9 +9,13 @@ export const AuthProvider = ({ children }) => {
   // Para mantener la sesión viva al recargar
   useEffect(() => {
     if (token && !usuario) {
-      // Podrías decodificar el token o hacer una consulta para obtener datos del usuario
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUsuario({ correo: payload.email }); // adaptar según tu token
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUsuario({ correo: payload.email }); // adaptar según tu token
+      } catch (e) {
+        console.error("Token inválido", e);
+        logout();
+      }
     }
   }, [token]);
 
