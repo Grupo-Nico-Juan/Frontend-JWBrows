@@ -9,9 +9,12 @@ export const AuthProvider = ({ children }) => {
   // Para mantener la sesión viva al recargar
   useEffect(() => {
     if (token && !usuario) {
-      try {
+      try {//arreglar porque el payload carga undefined el correo y el tipo 
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUsuario({ correo: payload.email }); // adaptar según tu token
+        console.log(payload.email,payload.tipoUsuario)
+        setUsuario({ correo: payload.email,
+                    tipoUsuario: payload.tipoUsuario });
+                     // adaptar según tu token
       } catch (e) {
         console.error("Token inválido", e);
         logout();
@@ -23,7 +26,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', nuevoToken);
     setToken(nuevoToken);
     const payload = JSON.parse(atob(nuevoToken.split('.')[1]));
-    setUsuario({ correo: payload.email }); // o el campo que tenga tu token
+    console.log(payload)
+    console.log(payload.email)
+    setUsuario({ correo: payload.email
+      
+     }); // o el campo que tenga tu token
   };
 
   const logout = () => {
