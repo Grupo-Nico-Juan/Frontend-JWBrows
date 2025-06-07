@@ -31,7 +31,19 @@ const Login = () => {
 
       if (token) {
         login(token);
-        navigate('/'); // redirige a inicio o dashboard
+        
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const tipoUsuario = payload.tipoUsuario;
+        console.log(payload);
+         if (tipoUsuario === "Administrador") {
+          navigate("/menu-admin");
+        } else if (tipoUsuario === "Empleado") {
+          navigate("/turnos");
+        } else {
+          setError("Tipo de usuario no válido.");
+        }
+
+
       } else {
         setError('Token no recibido. Verifica la respuesta del servidor.');
       }
