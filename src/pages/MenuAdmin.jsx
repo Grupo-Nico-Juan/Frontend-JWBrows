@@ -9,7 +9,7 @@ const MenuAdmin = () => {
 
       <ul style={{ listStyle: "none", paddingLeft: 0 }}>
         <li>
-          <Link to="/alta-usuario">➕ Alta de usuarios</Link>
+          <Link to="/empleados">➕ Empleados</Link>
         </li>
         <li>
           <Link to="/turnos">📅 Gestión de turnos</Link>

@@ -5,15 +5,17 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [usuario, setUsuario] = useState(null); // Podés guardar más info acá si el backend la devuelve
+  const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
   // Para mantener la sesión viva al recargar
   useEffect(() => {
     if (token && !usuario) {
-      try {//arreglar porque el payload carga undefined el correo y el tipo 
+      try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUsuario({ correo: payload.email,
-                    tipoUsuario: payload.tipoUsuario });
-                     // adaptar según tu token
+        setUsuario({
+          correo: payload.email,
+          tipoUsuario: payload[ROLE_CLAIM] || payload.role // Intenta ambos por compatibilidad
+        });
       } catch (e) {
         console.error("Token inválido", e);
         logout();
@@ -25,9 +27,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', nuevoToken);
     setToken(nuevoToken);
     const payload = JSON.parse(atob(nuevoToken.split('.')[1]));
-    setUsuario({ correo: payload.email
-      
-     }); // o el campo que tenga tu token
+    setUsuario({
+      correo: payload.email,
+      tipoUsuario: payload[ROLE_CLAIM] || payload.role
+    });
   };
 
   const logout = () => {

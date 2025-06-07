@@ -5,6 +5,8 @@ import AltaUsuario from './pages/AltaUsuario';
 import MenuAdmin from './pages/MenuAdmin';
 import NavBar from "./components/NavBar";
 import { useAuth } from "./context/AuthContext";
+import EmpleadosList from './pages/EmpleadosList';
+import EmpleadoForm from './pages/EmpleadoForm';
 
 function App() {
   const { estaAutenticado } = useAuth();
@@ -17,6 +19,9 @@ function App() {
         <Route path="/registro" element={<Registro />} />
         <Route path="/altaUsuario" element={<AltaUsuario />} />
         <Route path="/menu-admin" element={<MenuAdmin />} />
+        <Route path="/empleados" element={<EmpleadosList />} />
+        <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
+        <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
       </Routes>
     </>
   );
