@@ -7,6 +7,7 @@ import NavBar from "./components/NavBar";
 import { useAuth } from "./context/AuthContext";
 import EmpleadosList from './pages/EmpleadosList';
 import EmpleadoForm from './pages/EmpleadoForm';
+import Turnos from './pages/Turnos';
 
 function App() {
   const { estaAutenticado } = useAuth();
@@ -22,6 +23,7 @@ function App() {
         <Route path="/empleados" element={<EmpleadosList />} />
         <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
         <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
+        <Route path="/turnos" element={<Turnos />} />
       </Routes>
     </>
   );

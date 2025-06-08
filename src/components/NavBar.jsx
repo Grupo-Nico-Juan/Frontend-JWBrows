@@ -15,17 +15,13 @@ const NavBar = () => {
 
   return (
     <nav style={{ padding: "1rem", borderBottom: "1px solid #ccc", marginBottom: "2rem" }}>
-      {usuario.tipoUsuario === "administrador" ? (
+      {usuario.tipoUsuario === "Administrador" ? (
         <>
           <Link to="/menu-admin">Inicio</Link> {" | "}
           <Link to="/alta-usuario">Alta Usuario</Link> {" | "}
           <Link to="/turnos">Gestión de Turnos</Link> {" | "}
         </>
-      ) : (
-        <>
-          <Link to="/turnos">Mis Turnos</Link> {" | "}
-        </>
-      )}
+      ) : null}
       <button onClick={handleLogout}>Cerrar sesión</button>
     </nav>
   );

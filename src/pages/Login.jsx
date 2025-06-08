@@ -32,13 +32,12 @@ const Login = () => {
       if (token) {
         login(token);
 
+        // decodificar el token
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // Busca el rol usando la clave larga o 'role'
         const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
         const tipoUsuario = payload[ROLE_CLAIM] || payload.role;
 
-        console.log(payload);
-
+        // redirección según tipo
         if (tipoUsuario === "Administrador") {
           navigate("/menu-admin");
         } else if (tipoUsuario === "Empleado") {
@@ -46,6 +45,7 @@ const Login = () => {
         } else {
           setError("Tipo de usuario no válido.");
         }
+
       } else {
         setError('Token no recibido. Verifica la respuesta del servidor.');
       }
