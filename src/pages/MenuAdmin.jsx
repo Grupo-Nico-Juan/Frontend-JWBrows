@@ -12,7 +12,7 @@ const MenuAdmin = () => {
           <Link to="/empleados">➕ Empleados</Link>
         </li>
         <li>
-          <Link to="/turnos">📅 Gestión de turnos</Link>
+          <Link to="/asignarTurno">📅 Gestión de turnos</Link>
         </li>
         <li>
           <span style={{ color: "#aaa" }}>📊 Reportes (próximamente)</span>

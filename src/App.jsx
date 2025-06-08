@@ -8,6 +8,7 @@ import { useAuth } from "./context/AuthContext";
 import EmpleadosList from './pages/EmpleadosList';
 import EmpleadoForm from './pages/EmpleadoForm';
 import Turnos from './pages/Turnos';
+import AsignarTurno from './pages/AsignarTurno';
 
 function App() {
   const { estaAutenticado } = useAuth();
@@ -24,6 +25,7 @@ function App() {
         <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
         <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
         <Route path="/turnos" element={<Turnos />} />
+        <Route path='/asignarTurno' element={<AsignarTurno />} />
       </Routes>
     </>
   );

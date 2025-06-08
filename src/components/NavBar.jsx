@@ -18,8 +18,8 @@ const NavBar = () => {
       {usuario.tipoUsuario === "Administrador" ? (
         <>
           <Link to="/menu-admin">Inicio</Link> {" | "}
-          <Link to="/alta-usuario">Alta Usuario</Link> {" | "}
-          <Link to="/turnos">Gestión de Turnos</Link> {" | "}
+          <Link to="/empleados/nuevo">Alta Usuario</Link> {" | "}
+          <Link to="/asignarTurno">Gestión de Turnos</Link> {" | "}
         </>
       ) : null}
       <button onClick={handleLogout}>Cerrar sesión</button>
