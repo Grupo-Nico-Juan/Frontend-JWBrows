@@ -9,7 +9,7 @@ type AuthContextType = {
   login: (token: string) => void;
 };
 
-type FormData = {
+interface FormData {
   email: string;
   password: string;
 };

@@ -12,7 +12,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-type Empleado = {
+interface Empleado {
   id: number;
   nombre: string;
   apellido: string;
@@ -20,7 +20,7 @@ type Empleado = {
   cargo: string;
 };
 
-type Usuario = {
+interface Usuario {
   tipoUsuario: string;
 };
 

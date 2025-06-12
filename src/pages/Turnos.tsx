@@ -4,12 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-type Usuario = {
+interface Usuario {
   tipoUsuario: string;
   // puedes agregar más campos si los necesitas
 };
 
-type Turno = {
+interface Turno {
   id: number;
   hora: string;
   clienteNombre: string;

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-type FormData = {
+interface FormData {
   nombre: string;
   apellido: string;
   email: string;

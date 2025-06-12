@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "../api/AxiosInstance";
 import { Button } from "@/components/ui/button";
 
-type Usuario = {
+interface Usuario {
   tipoUsuario: string;
   // puedes agregar más campos si los necesitas
 };
 
-type FormData = {
+interface FormData {
   nombre: string;
   apellido: string;
   email: string;
