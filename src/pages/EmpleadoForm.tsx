@@ -1,6 +1,7 @@
 import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import axios from '../api/AxiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 type EmpleadoFormData = {
   nombre: string;
@@ -96,8 +97,8 @@ const EmpleadoForm: React.FC = () => {
           onChange={handleChange}
           required
         />
-        <button type="submit">{editando ? 'Guardar cambios' : 'Crear empleado'}</button>
-        <button type="button" onClick={() => navigate('/empleados')}>Cancelar</button>
+        <Button type="submit">{editando ? 'Guardar cambios' : 'Crear empleado'}</Button>
+        <Button type="button" onClick={() => navigate('/empleados')}>Cancelar</Button>
         {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
     </div>

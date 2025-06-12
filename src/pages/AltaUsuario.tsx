@@ -2,6 +2,7 @@ import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/AxiosInstance";
+import { Button } from "@/components/ui/button";
 
 type Usuario = {
   tipoUsuario: string;
@@ -110,7 +111,7 @@ const AltaUsuario: React.FC = () => {
           <option value="Administrador">Administrador</option>
           {/* Futuro: <option value="Cliente">Cliente</option> */}
         </select>
-        <button type="submit">Registrar</button>
+        <Button type="submit">Registrar</Button>
         {error && <p style={{ color: "red" }}>{error}</p>}
         {success && <p style={{ color: "green" }}>{success}</p>}
       </form>

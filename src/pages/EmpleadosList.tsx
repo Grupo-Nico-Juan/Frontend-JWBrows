@@ -57,7 +57,7 @@ const EmpleadosList: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto my-8 p-6 border rounded-lg shadow">
+    <div className="max-w-4xl mx-auto my-8 p-6 border rounded-lg">
       <h2 className="text-2xl font-bold mb-4">Empleados</h2>
       <Button className="mb-4" onClick={() => navigate("/empleados/nuevo")}>
         Nuevo Empleado
@@ -84,7 +84,6 @@ const EmpleadosList: React.FC = () => {
                 <TableCell className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="secondary"
                     onClick={() => navigate(`/empleados/editar/${emp.id}`)}
                   >
                     Editar

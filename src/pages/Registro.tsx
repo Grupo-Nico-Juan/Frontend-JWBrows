@@ -46,7 +46,7 @@ const Registro: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8 p-6 border rounded-lg shadow">
+    <div className="max-w-md mx-auto my-8 p-6 border rounded-lg">
       <h2 className="text-2xl font-bold mb-4">Registro de Usuario</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input

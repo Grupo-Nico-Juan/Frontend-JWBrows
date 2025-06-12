@@ -43,7 +43,7 @@ const Turnos: React.FC = () => {
   }, [usuario, navigate]);
 
   return (
-    <div className="max-w-2xl mx-auto my-8 p-6 border rounded-lg shadow">
+    <div className="max-w-2xl mx-auto my-8 p-6 border rounded-lg">
       <h2 className="text-2xl font-bold mb-4">Turnos del Día</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {turnos.length === 0 ? (

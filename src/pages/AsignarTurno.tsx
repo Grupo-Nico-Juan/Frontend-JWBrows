@@ -1,6 +1,7 @@
 import React, { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import axios from "../api/AxiosInstance";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface Empleada {
   id: number;
@@ -143,15 +144,14 @@ const AsignarTurno: React.FC = () => {
           })}
         />
 
-        <button type="button" onClick={handleAgregarDetalle}>Agregar Servicio</button>
-
+        <Button onClick={handleAgregarDetalle}>Agregar Servicio</Button>
         <ul>
           {formData.detalles.map((d, i) => (
             <li key={i}>Servicio ID: {d.servicioId}, Duración: {d.duracionMinutos} min, Precio: ${d.precio}</li>
           ))}
         </ul>
 
-        <button type="submit">Asignar Turno</button>
+        <Button>Asignar Turno</Button>
       </form>
     </div>
   );

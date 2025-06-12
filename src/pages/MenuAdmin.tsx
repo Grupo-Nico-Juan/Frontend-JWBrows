@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const MenuAdmin: React.FC = () => {
   return (
-    <div className="max-w-lg mx-auto my-12 p-8 border rounded-lg shadow">
+    <div className="max-w-lg mx-auto my-12 p-8 border rounded-lg">
       <h2 className="text-2xl font-bold mb-4">Menú Administrador</h2>
       <p className="mb-6">Seleccioná una opción:</p>
       <div className="flex flex-col gap-4">

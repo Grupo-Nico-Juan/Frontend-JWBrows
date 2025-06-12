@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Button } from "./ui/button";
 
 const NavBar = () => {
   const { usuario, logout } = useAuth();
@@ -22,7 +23,7 @@ const NavBar = () => {
           <Link to="/asignarTurno">Gestión de Turnos</Link> {" | "}
         </>
       ) : null}
-      <button onClick={handleLogout}>Cerrar sesión</button>
+      <Button onClick={handleLogout}>Cerrar sesión</Button>
     </nav>
   );
 };
