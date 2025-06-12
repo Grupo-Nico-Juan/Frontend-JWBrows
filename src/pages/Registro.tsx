@@ -1,11 +1,21 @@
-import React, { useState } from "react";
-import axios from "../api/axiosInstance";
+import React, { useState, ChangeEvent, FormEvent } from "react";
+import axios from "../api/AxiosInstance";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-const Registro = () => {
+type FormData = {
+  nombre: string;
+  apellido: string;
+  email: string;
+  password: string;
+  tipoUsuario: string;
+};
+
+const Registro: React.FC = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     nombre: "",
     apellido: "",
     email: "",
@@ -13,16 +23,16 @@ const Registro = () => {
     tipoUsuario: "Empleado",
   });
 
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -36,10 +46,10 @@ const Registro = () => {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "2rem auto" }}>
-      <h2>Registro de Usuario</h2>
-      <form onSubmit={handleSubmit}>
-        <input
+    <div className="max-w-md mx-auto my-8 p-6 border rounded-lg shadow">
+      <h2 className="text-2xl font-bold mb-4">Registro de Usuario</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
           type="text"
           name="nombre"
           placeholder="Nombre"
@@ -47,7 +57,7 @@ const Registro = () => {
           onChange={handleChange}
           required
         />
-        <input
+        <Input
           type="text"
           name="apellido"
           placeholder="Apellido"
@@ -55,7 +65,7 @@ const Registro = () => {
           onChange={handleChange}
           required
         />
-        <input
+        <Input
           type="email"
           name="email"
           placeholder="Correo electrónico"
@@ -63,7 +73,7 @@ const Registro = () => {
           onChange={handleChange}
           required
         />
-        <input
+        <Input
           type="password"
           name="password"
           placeholder="Contraseña"
@@ -75,13 +85,16 @@ const Registro = () => {
           name="tipoUsuario"
           value={formData.tipoUsuario}
           onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
           required
         >
           <option value="Empleado">Empleado</option>
           <option value="Administrador">Administrador</option>
         </select>
-        <button type="submit">Registrarse</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        <Button type="submit" className="w-full mt-4">
+          Registrarse
+        </Button>
+        {error && <p className="text-red-500">{error}</p>}
       </form>
     </div>
   );

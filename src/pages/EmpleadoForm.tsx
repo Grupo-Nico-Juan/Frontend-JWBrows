@@ -1,38 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import axios from '../api/axiosInstance';
+import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
+import axios from '../api/AxiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
 
-const EmpleadoForm = () => {
+type EmpleadoFormData = {
+  nombre: string;
+  apellido: string;
+  email: string;
+  passwordPlano: string;
+  cargo: string;
+};
+
+const EmpleadoForm: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id?: string }>();
   const editando = !!id;
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<EmpleadoFormData>({
     nombre: '',
     apellido: '',
     email: '',
     passwordPlano: '',
     cargo: ''
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    if (editando) {
-      axios.get(`/api/Empleado/${id}`)
+    if (editando && id) {
+      axios.get<EmpleadoFormData>(`/api/Empleado/${id}`)
         .then(res => setForm({ ...res.data, passwordPlano: '' }))
         .catch(() => setError('No se pudo cargar el empleado'));
     }
   }, [editando, id]);
 
-  const handleChange = e => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     try {
-      if (editando) {
+      if (editando && id) {
         // PUT para editar (no se envía passwordPlano si está vacío)
         const { passwordPlano, ...rest } = form;
         await axios.put(`/api/Empleado/${id}`, passwordPlano ? form : rest);

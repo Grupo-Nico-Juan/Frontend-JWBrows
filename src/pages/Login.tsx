@@ -1,33 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../api/axiosInstance';
+import axios from '../api/AxiosInstance';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
-const Login = () => {
+type AuthContextType = {
+  login: (token: string) => void;
+};
+
+type FormData = {
+  email: string;
+  password: string;
+};
+
+const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useAuth() as AuthContextType;
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     password: ''
   });
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
     try {
       const response = await axios.post('api/Usuario/login', formData);
-      const token = response.data.token;
+      const token: string = response.data.token;
 
       if (token) {
         login(token);
@@ -56,10 +67,10 @@ const Login = () => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '2rem auto' }}>
-      <h2>Iniciar Sesión</h2>
-      <form onSubmit={handleSubmit}>
-        <input
+    <div className="max-w-md mx-auto my-8 p-6 border rounded-lg shadow">
+      <h2 className="text-2xl font-bold mb-4">Iniciar Sesión</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
           type="email"
           name="email"
           placeholder="Correo electrónico"
@@ -67,7 +78,7 @@ const Login = () => {
           onChange={handleChange}
           required
         />
-        <input
+        <Input
           type="password"
           name="password"
           placeholder="Contraseña"
@@ -75,8 +86,10 @@ const Login = () => {
           onChange={handleChange}
           required
         />
-        <button type="submit">Ingresar</button>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <Button type="submit" className="w-full mt-4">
+          Ingresar
+        </Button>
+        {error && <p className="text-red-500">{error}</p>}
       </form>
     </div>
   );

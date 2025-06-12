@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import axios from "../api/axiosInstance";
+import axios from "../api/AxiosInstance";
 
-const AltaUsuario = () => {
-  const { usuario, token } = useAuth();
+type Usuario = {
+  tipoUsuario: string;
+  // puedes agregar más campos si los necesitas
+};
+
+type FormData = {
+  nombre: string;
+  apellido: string;
+  email: string;
+  password: string;
+  tipoUsuario: string;
+};
+
+const AltaUsuario: React.FC = () => {
+  const { usuario, token } = useAuth() as { usuario: Usuario | null; token: string | null };
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     nombre: "",
     apellido: "",
     email: "",
@@ -15,8 +28,8 @@ const AltaUsuario = () => {
     tipoUsuario: "Empleado",
   });
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   useEffect(() => {
     if (!token || !usuario || usuario.tipoUsuario !== "Administrador") {
@@ -24,14 +37,14 @@ const AltaUsuario = () => {
     }
   }, [token, usuario, navigate]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
