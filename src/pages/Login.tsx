@@ -4,6 +4,7 @@ import axios from '../api/AxiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type AuthContextType = {
   login: (token: string) => void;
@@ -12,7 +13,7 @@ type AuthContextType = {
 interface FormData {
   email: string;
   password: string;
-};
+}
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -42,13 +43,10 @@ const Login: React.FC = () => {
 
       if (token) {
         login(token);
-
-        // decodificar el token
         const payload = JSON.parse(atob(token.split('.')[1]));
         const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
         const tipoUsuario = payload[ROLE_CLAIM] || payload.role;
 
-        // redirección según tipo
         if (tipoUsuario === "Administrador") {
           navigate("/menu-admin");
         } else if (tipoUsuario === "Empleado") {
@@ -56,7 +54,6 @@ const Login: React.FC = () => {
         } else {
           setError("Tipo de usuario no válido.");
         }
-
       } else {
         setError('Token no recibido. Verifica la respuesta del servidor.');
       }
@@ -67,30 +64,36 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8 p-6 border rounded-lg">
-      <h2 className="text-2xl font-bold mb-4">Iniciar Sesión</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          type="email"
-          name="email"
-          placeholder="Correo electrónico"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          type="password"
-          name="password"
-          placeholder="Contraseña"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <Button type="submit" className="w-full mt-4">
-          Ingresar
-        </Button>
-        {error && <p className="text-red-500">{error}</p>}
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md shadow-lg border border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              type="email"
+              name="email"
+              placeholder="Correo electrónico"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+            <Input
+              type="password"
+              name="password"
+              placeholder="Contraseña"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <Button type="submit" className="w-full mt-2">
+              Ingresar
+            </Button>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
