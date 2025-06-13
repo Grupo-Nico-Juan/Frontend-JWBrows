@@ -3,12 +3,13 @@ import Login from './pages/Login';
 import Registro from './pages/Registro';
 import AltaUsuario from './pages/AltaUsuario';
 import MenuAdmin from './pages/MenuAdmin';
-import NavBar from "./components/NavBar";
+import { NavBar } from "./components/NavBar";
 import { useAuth } from "./context/AuthContext";
 import EmpleadosList from './pages/EmpleadosList';
 import EmpleadoForm from './pages/EmpleadoForm';
 import Turnos from './pages/Turnos';
 import AsignarTurno from './pages/AsignarTurno';
+
 
 function App() {
   const { estaAutenticado } = useAuth();
@@ -16,7 +17,8 @@ function App() {
   return (
     <>
       {estaAutenticado && <NavBar />}
-      <Routes>
+      
+      <Routes >
         <Route path="/" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/altaUsuario" element={<AltaUsuario />} />
