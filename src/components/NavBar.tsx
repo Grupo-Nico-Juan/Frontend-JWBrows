@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar"
 
 export const NavBar: React.FC = () => {
-  const { usuario, logout } = useAuth()
+  const { usuario, logout } = useAuth() as { usuario: { tipoUsuario: string } | null; logout: () => void }
   const navigate = useNavigate()
 
   if (!usuario) return null

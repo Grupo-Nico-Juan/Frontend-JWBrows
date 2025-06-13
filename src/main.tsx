@@ -4,7 +4,7 @@ import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
-import { SidebarProvider } from "@/components/ui/sidebar"
+
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('No root element found');
@@ -14,9 +14,7 @@ ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <SidebarProvider>
         <App />
-        </SidebarProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
