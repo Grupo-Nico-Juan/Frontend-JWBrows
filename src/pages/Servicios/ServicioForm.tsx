@@ -7,25 +7,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
-interface EmpleadoFormData {
+interface ServicioFormData {
   nombre: string;
-  apellido: string;
-  email: string;
-  passwordPlano: string;
-  cargo: string;
+  descripcion: string;
+  duracionMinutos: number | '';
+  precio: number | '';
 }
 
-const EmpleadoForm: React.FC = () => {
+const ServicioForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const editando = !!id;
 
-  const [form, setForm] = useState<EmpleadoFormData>({
+  const [form, setForm] = useState<ServicioFormData>({
     nombre: '',
-    apellido: '',
-    email: '',
-    passwordPlano: '',
-    cargo: '',
+    descripcion: '',
+    duracionMinutos: '',
+    precio: ''
   });
 
   const [error, setError] = useState<string>('');
@@ -33,14 +31,20 @@ const EmpleadoForm: React.FC = () => {
   useEffect(() => {
     if (editando && id) {
       axios
-        .get<EmpleadoFormData>(`/api/Empleado/${id}`)
-        .then((res) => setForm({ ...res.data, passwordPlano: '' }))
-        .catch(() => setError('No se pudo cargar el empleado'));
+        .get<ServicioFormData>(`/api/Servicio/${id}`)
+        .then((res) => setForm(res.data))
+        .catch(() => setError('No se pudo cargar el servicio'));
     }
   }, [editando, id]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((f) => ({
+      ...f,
+      [name]: name === 'duracionMinutos' || name === 'precio'
+        ? value === '' ? '' : Number(value)
+        : value
+    }));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -48,16 +52,15 @@ const EmpleadoForm: React.FC = () => {
     setError('');
     try {
       if (editando && id) {
-        const { passwordPlano, ...rest } = form;
-        await axios.put(`/api/Empleado/${id}`, passwordPlano ? form : rest);
-        toast.success('Empleado actualizado correctamente');
+        await axios.put(`/api/Servicio/${id}`, form);
+        toast.success('Servicio actualizado correctamente');
       } else {
-        await axios.post('/api/Empleado', form);
-        toast.success('Empleado creado correctamente');
+        await axios.post('/api/Servicio', form);
+        toast.success('Servicio creado correctamente');
       }
-      navigate('/empleados');
+      navigate('/servicios');
     } catch (err) {
-      setError('Error al guardar empleado');
+      setError('Error al guardar servicio');
     }
   };
 
@@ -71,52 +74,42 @@ const EmpleadoForm: React.FC = () => {
         <Card className="w-full max-w-lg p-6 shadow-xl border border-[#e6dcd4] bg-[#fffaf5]">
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl text-[#6e4b3a]">
-              {editando ? 'Editar Empleado' : 'Nuevo Empleado'}
+              {editando ? 'Editar Servicio' : 'Nuevo Servicio'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  name="nombre"
-                  placeholder="Nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  required
-                />
-                <Input
-                  name="apellido"
-                  placeholder="Apellido"
-                  value={form.apellido}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                  disabled={editando}
-                />
-                <Input
-                  name="passwordPlano"
-                  type="password"
-                  placeholder={editando ? 'Nueva contraseña (opcional)' : 'Contraseña'}
-                  value={form.passwordPlano}
-                  onChange={handleChange}
-                  required={!editando}
-                />
-              </div>
               <Input
-                name="cargo"
-                placeholder="Cargo"
-                value={form.cargo}
+                name="nombre"
+                placeholder="Nombre"
+                value={form.nombre}
                 onChange={handleChange}
                 required
+              />
+              <Input
+                name="descripcion"
+                placeholder="Descripción"
+                value={form.descripcion}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                name="duracionMinutos"
+                type="number"
+                placeholder="Duración (minutos)"
+                value={form.duracionMinutos}
+                onChange={handleChange}
+                required
+                min={1}
+              />
+              <Input
+                name="precio"
+                type="number"
+                placeholder="Precio"
+                value={form.precio}
+                onChange={handleChange}
+                required
+                min={0}
               />
               <div className="flex justify-end gap-4 pt-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -124,7 +117,7 @@ const EmpleadoForm: React.FC = () => {
                     type="button"
                     variant="secondary"
                     className="btn-beish"
-                    onClick={() => navigate('/empleados')}
+                    onClick={() => navigate('/servicios')}
                   >
                     Cancelar
                   </Button>
@@ -134,7 +127,7 @@ const EmpleadoForm: React.FC = () => {
                     type="submit"
                     className="btn-jmbrows"
                   >
-                    {editando ? 'Guardar cambios' : 'Crear empleado'}
+                    {editando ? 'Guardar cambios' : 'Crear servicio'}
                   </Button>
                 </motion.div>
               </div>
@@ -147,4 +140,4 @@ const EmpleadoForm: React.FC = () => {
   );
 };
 
-export default EmpleadoForm;
+export default ServicioForm;
