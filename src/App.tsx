@@ -8,6 +8,8 @@ import EmpleadoForm from './pages/EmpleadoForm';
 import Turnos from './pages/Turnos';
 import AsignarTurno from './pages/AsignarTurno';
 import MainLayout from './pages/MainLayout';
+import ServiciosList from './pages/Servicios/ServiciosList';
+import ServicioForm from './pages/Servicios/ServicioForm';
 
 
 function App() {
@@ -26,6 +28,9 @@ function App() {
           <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
           <Route path="/turnos" element={<Turnos />} />
           <Route path='/asignarTurno' element={<AsignarTurno />} />
+          <Route path="/servicios" element={<ServiciosList />} />
+          <Route path="/servicios/nuevo" element={<ServicioForm />} />
+          <Route path="/servicios/editar/:id" element={<ServicioForm />} />
       </Routes>
     </MainLayout>
 
