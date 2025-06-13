@@ -28,12 +28,12 @@ export const NavBar: React.FC = () => {
   }
 
   return (
-    <Sidebar className="h-screen border-r bg-white">
+    <Sidebar className="h-screen border-r border-[#e7d9cd] bg-[#fffaf5] text-[#7a5b4c]">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="p-2">
-              <Link to="/menu-admin" className="flex items-center gap-2">
+            <SidebarMenuButton asChild className="hover:bg-[#f4e9e1] transition-colors rounded-md">
+              <Link to="/menu-admin" className="flex items-center gap-2 text-[#7a5b4c] hover:text-[#5d3f2d]">
                 <IconLayoutDashboard className="h-5 w-5" />
                 <span className="text-lg font-semibold">JMBROWS</span>
               </Link>
@@ -44,10 +44,13 @@ export const NavBar: React.FC = () => {
 
       <SidebarContent>
         <SidebarMenu>
-          {usuario.tipoUsuario === "Administrador" && (
+          {usuario.tipoUsuario === 'Administrador' && (
             <>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
                   <Link to="/empleados/nuevo" className="flex items-center gap-2 px-2 py-2">
                     <IconUserPlus className="h-5 w-5" />
                     Alta Usuario
@@ -55,7 +58,10 @@ export const NavBar: React.FC = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
                   <Link to="/asignarTurno" className="flex items-center gap-2 px-2 py-2">
                     <IconCalendarCheck className="h-5 w-5" />
                     Gestión Turnos
@@ -72,7 +78,7 @@ export const NavBar: React.FC = () => {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="flex items-center gap-2 px-2 py-2 text-red-600"
+              className="flex items-center gap-2 px-2 py-2 text-[#a1452f] hover:bg-[#a1452f] hover:text-white transition-colors rounded-md"
             >
               <IconLogout className="h-5 w-5" />
               Cerrar sesión

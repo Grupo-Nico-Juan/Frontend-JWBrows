@@ -9,7 +9,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   if (!usuario) {
     // Público: solo centrado
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-full max-w-md">{children}</div>
       </div>
     );
@@ -18,7 +18,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Privado: sidebar + contenido, envuelto en SidebarProvider
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-row bg-gray-50">
+      <div className="min-h-screen flex flex-row">
         <NavBar />
         <main className="flex-1 flex items-center justify-center h-screen">
           <div className="w-full max-w-2xl">{children}</div>
