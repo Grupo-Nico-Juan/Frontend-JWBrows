@@ -62,6 +62,17 @@ export const NavBar: React.FC = () => {
                   asChild
                   className="hover:bg-[#f4e9e1] transition-colors rounded-md"
                 >
+                  <Link to="/servicios" className="flex items-center gap-2 px-2 py-2">
+                    <IconUserPlus className="h-5 w-5" />
+                    Servicios
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
                   <Link to="/asignarTurno" className="flex items-center gap-2 px-2 py-2">
                     <IconCalendarCheck className="h-5 w-5" />
                     Gestión Turnos
