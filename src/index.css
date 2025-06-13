@@ -183,3 +183,11 @@ html, body, #root {
   height: 100%;
   background-color: #fdf6f1; /* fondo beishe */
 }
+
+
+.btn-jmbrows {
+    @apply bg-[#6e4b3a] text-white hover:bg-[#5c3f2e] transition-colors duration-200;
+}
+.btn-beish {
+    @apply bg-[#f2e4d9] text-[#6e4b3a] hover:bg-[#e6d4c4] transition-colors duration-200;
+}
