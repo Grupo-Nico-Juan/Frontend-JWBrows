@@ -73,6 +73,39 @@ export const NavBar: React.FC = () => {
                   asChild
                   className="hover:bg-[#f4e9e1] transition-colors rounded-md"
                 >
+                  <Link to="/sucursales" className="flex items-center gap-2 px-2 py-2">
+                    <IconUserPlus className="h-5 w-5" />
+                    Sucursales
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
+                  <Link to="/sectores" className="flex items-center gap-2 px-2 py-2">
+                    <IconUserPlus className="h-5 w-5" />
+                    Sectores
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
+                  <Link to="/habilidades" className="flex items-center gap-2 px-2 py-2">
+                    <IconUserPlus className="h-5 w-5" />
+                    Habilidades
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
                   <Link to="/asignarTurno" className="flex items-center gap-2 px-2 py-2">
                     <IconCalendarCheck className="h-5 w-5" />
                     Gestión Turnos

@@ -10,6 +10,12 @@ import AsignarTurno from './pages/AsignarTurno';
 import MainLayout from './pages/MainLayout';
 import ServiciosList from './pages/Servicios/ServiciosList';
 import ServicioForm from './pages/Servicios/ServicioForm';
+import SucursalesList from './pages/Sucursales/SucursalesList';
+import SucursalForm from './pages/Sucursales/SucursalForm';
+import SectoresList from './pages/Sectores/SectoresList';
+import SectorForm from './pages/Sectores/SectorForm';
+import HabilidadesList from './pages/Habilidades/HabilidadesList';
+import HabilidadForm from './pages/Habilidades/HabilidadForm';
 
 
 function App() {
@@ -31,6 +37,15 @@ function App() {
           <Route path="/servicios" element={<ServiciosList />} />
           <Route path="/servicios/nuevo" element={<ServicioForm />} />
           <Route path="/servicios/editar/:id" element={<ServicioForm />} />
+          <Route path="/sucursales" element={<SucursalesList />} />
+          <Route path="/sucursales/nueva" element={<SucursalForm />} />
+          <Route path="/sucursales/editar/:id" element={<SucursalForm />} />
+          <Route path="/sectores" element={<SectoresList />} />
+          <Route path="/sectores/nuevo" element={<SectorForm />} />
+          <Route path="/sectores/editar/:id" element={<SectorForm />} />
+          <Route path="/habilidades" element={<HabilidadesList />} />
+          <Route path="/habilidades/nueva" element={<HabilidadForm />} />
+          <Route path="/habilidades/editar/:id" element={<HabilidadForm />} />
       </Routes>
     </MainLayout>
 
