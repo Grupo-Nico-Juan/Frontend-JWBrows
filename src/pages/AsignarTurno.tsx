@@ -63,18 +63,13 @@ const AsignarTurno: React.FC = () => {
   const [time, setTime] = useState("10:30:00");
 
   useEffect(() => {
-    axios.get<Empleada[]>("/api/empleados")
+    axios.get<Empleada[]>("/api/Empleado")
       .then(res => setEmpleadas(res.data))
       .catch(err => console.error(err));
 
-    axios.get<Servicio[]>("/api/servicios")
+    axios.get<Servicio[]>("/api/Servicio")
       .then(res => setServicios(res.data))
-      .catch(() => {
-        setServicios([
-          { id: 1, nombre: "Corte de pelo", duracionMinutos: 30, precio: 500 },
-          { id: 2, nombre: "Peinado", duracionMinutos: 45, precio: 800 },
-        ]);
-      });
+      .catch(err => console.error(err));
   }, []);
 
   const handleAgregarDetalle = () => {
@@ -169,7 +164,6 @@ const AsignarTurno: React.FC = () => {
                   </option>
                 ))}
               </select>
-
               <hr className="my-2 border-muted" />
               <h4 className="text-lg text-[#6e4b3a] font-semibold">Agregar servicios</h4>
 
@@ -224,7 +218,7 @@ const AsignarTurno: React.FC = () => {
                   </Button>
                 </motion.div>
               </div>
-             
+
               <div className="flex justify-end gap-4 mt-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button type="submit" className="btn-jmbrows w-40"  >
