@@ -16,6 +16,8 @@ import SectoresList from './pages/Sectores/SectoresList';
 import SectorForm from './pages/Sectores/SectorForm';
 import HabilidadesList from './pages/Habilidades/HabilidadesList';
 import HabilidadForm from './pages/Habilidades/HabilidadForm';
+import PeriodosLaboralesList from './pages/PeriodosLaborales/PeriodosLaboralesList';
+import PeriodoLaboralForm from './pages/PeriodosLaborales/PeriodoLaboralForm';
 
 
 function App() {
@@ -46,6 +48,9 @@ function App() {
           <Route path="/habilidades" element={<HabilidadesList />} />
           <Route path="/habilidades/nueva" element={<HabilidadForm />} />
           <Route path="/habilidades/editar/:id" element={<HabilidadForm />} />
+          <Route path="/periodos-laborales" element={<PeriodosLaboralesList />} />
+          <Route path="/periodos-laborales/nuevo" element={<PeriodoLaboralForm />} />
+          <Route path="/periodos-laborales/editar/:id" element={<PeriodoLaboralForm />} />
       </Routes>
     </MainLayout>
 

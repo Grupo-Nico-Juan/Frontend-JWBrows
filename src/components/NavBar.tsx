@@ -51,9 +51,20 @@ export const NavBar: React.FC = () => {
                   asChild
                   className="hover:bg-[#f4e9e1] transition-colors rounded-md"
                 >
-                  <Link to="/empleados/nuevo" className="flex items-center gap-2 px-2 py-2">
+                  <Link to="/empleados" className="flex items-center gap-2 px-2 py-2">
                     <IconUserPlus className="h-5 w-5" />
-                    Alta Usuario
+                    Empleados
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
+                  <Link to="/periodos-laborales" className="flex items-center gap-2 px-2 py-2">
+                    <IconUserPlus className="h-5 w-5" />
+                    Periodos Laborales
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
