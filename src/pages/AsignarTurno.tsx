@@ -42,6 +42,7 @@ interface FormData {
   fechaHora: string;
   empleadaId: string;
   detalles: DetalleTurno[];
+  clienteId: string;
 }
 
 const AsignarTurno: React.FC = () => {
@@ -51,7 +52,8 @@ const AsignarTurno: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     fechaHora: "",
     empleadaId: "",
-    detalles: []
+    detalles: [],
+    clienteId: "1"
   });
   const [detalleActual, setDetalleActual] = useState<DetalleTurno>({
     servicioId: 0,
@@ -73,23 +75,38 @@ const AsignarTurno: React.FC = () => {
   }, []);
 
   const handleAgregarDetalle = () => {
-    if (!detalleActual.servicioId) return;
+    if (!detalleActual.servicioId || detalleActual.duracionMinutos <= 0 || detalleActual.precio <= 0) {
+      toast.warning("Completa todos los campos del servicio");
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       detalles: [...prev.detalles, detalleActual]
     }));
-    setDetalleActual({ servicioId: 0, duracionMinutos: 0, precio: 0 });
-  };
 
+    setDetalleActual({ servicioId: 0, duracionMinutos: 0, precio: 0 });
+
+
+    console.log(formData.detalles);
+  };
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (formData.detalles.length === 0) {
+      toast.warning("Debes agregar al menos un servicio");
+      return;
+    }
+
     try {
       const fechaHoraStr = date ? `${date.toISOString().split("T")[0]}T${time}` : "";
+
       await axios.post("/api/turnos", {
         ...formData,
+        //FALTA O SELECCIONAR CLIENTE O NO PONERLE UN CLIENTE COMO TAL Y PONERLE UN STRING CON EL NOMBRE
         fechaHora: fechaHoraStr
       });
       toast.success("Turno asignado correctamente");
+      console.log(formData);
       navigate("/menu-admin");
     } catch (err) {
       console.error(err);
@@ -176,7 +193,7 @@ const AsignarTurno: React.FC = () => {
                       ...detalleActual,
                       servicioId: parseInt(e.target.value) || 0
                     })}
-                    required
+                    
                     className="border rounded-md px-2 py-2"
                   >
                     <option value="">Seleccione</option>
@@ -218,7 +235,21 @@ const AsignarTurno: React.FC = () => {
                   </Button>
                 </motion.div>
               </div>
-
+              {formData.detalles.length > 0 && (
+                <div className="mt-4">
+                  <h5 className="text-sm font-medium mb-2 text-[#6e4b3a]">Servicios agregados:</h5>
+                  <ul className="text-sm space-y-1 list-disc list-inside">
+                    {formData.detalles.map((detalle, index) => {
+                      const servicio = servicios.find(s => s.id === detalle.servicioId);
+                      return (
+                        <li key={index}>
+                          {servicio?.nombre || "Servicio"} — {detalle.duracionMinutos} min — ${detalle.precio}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
               <div className="flex justify-end gap-4 mt-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button type="submit" className="btn-jmbrows w-40"  >
