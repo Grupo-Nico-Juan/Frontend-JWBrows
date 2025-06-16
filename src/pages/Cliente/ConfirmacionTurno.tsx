@@ -19,46 +19,60 @@ const ConfirmarTurnoCliente: React.FC = () => {
   const hora = localStorage.getItem("horaSeleccionada") || "";
   const empleado = JSON.parse(localStorage.getItem("empleadoSeleccionado") || "{}");
 
-  const handleSubmit = async () => {
-    if (!nombre || !telefono) return toast.error("Completa nombre y teléfono");
+  const handleSubmit = () => {
+    if (!nombre || !telefono) {
+      toast.error("Completa nombre y teléfono");
+      return;
+    }
 
     setLoading(true);
+    let clienteId: number | null = null;
 
-    try {
-      const clienteRes = await axios.get(`/api/Cliente/telefono/${telefono}`);
-      let clienteId = clienteRes.data?.id;
-
-      if (!clienteId) {
-        const nuevoCliente = await axios.post("/api/Cliente", {
-          nombre,
-          telefono,
+    axios
+      .get(`/api/Cliente/telefono/${telefono}`)
+      .then((res) => {
+        clienteId = res.data.id;
+        return Promise.resolve(); // continuar
+      })
+      .catch((err) => {
+        if (err.response && err.response.status === 404) {
+          // Cliente no existe, lo creamos
+          return axios.post("/api/Cliente", {
+            nombre,
+            telefono,
+          }).then((res) => {
+            clienteId = res.data.id;
+          });
+        } else {
+          throw err;
+        }
+      })
+      .then(() => {
+        const fechaHora = `${fecha}T${hora}`;
+        return axios.post("/api/Turnos", {
+          fechaHora,
+          empleadaId: empleado.id,
+          clienteId,
+          detalles: [
+            {
+              servicioId: servicio.id,
+              duracionMinutos: servicio.duracionMinutos,
+              precio: servicio.precio,
+            },
+          ],
         });
-        clienteId = nuevoCliente.data.id;
-      }
-
-      const fechaHora = `${fecha}T${hora}`;
-
-      await axios.post("/api/Turnos", {
-        fechaHora,
-        empleadaId: empleado.id,
-        clienteId,
-        detalles: [
-          { 
-            servicioId: servicio.id,
-            duracionMinutos: servicio.duracionMinutos,
-            precio: servicio.precio,
-          },
-        ],
+      })
+      .then(() => {
+        toast.success("Turno agendado con éxito");
+        navigate("/");
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Hubo un error al agendar el turno");
+      })
+      .then(() => {
+        setLoading(false);
       });
-
-      toast.success("Turno agendado con éxito");
-      navigate("/");
-    } catch (error) {
-      console.error(error);
-      toast.error("Hubo un error al agendar el turno");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
