@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 const ConfirmarTurnoCliente: React.FC = () => {
   const navigate = useNavigate();
   const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [telefono, setTelefono] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +21,8 @@ const ConfirmarTurnoCliente: React.FC = () => {
   const empleado = JSON.parse(localStorage.getItem("empleadoSeleccionado") || "{}");
 
   const handleSubmit = () => {
-    if (!nombre || !telefono) {
-      toast.error("Completa nombre y teléfono");
+    if (!nombre || !telefono || !apellido) {
+      toast.error("Completa nombre, apellido y teléfono");
       return;
     }
 
@@ -40,6 +41,7 @@ const ConfirmarTurnoCliente: React.FC = () => {
           return axios.post("/api/Cliente", {
             nombre,
             telefono,
+            apellido
           }).then((res) => {
             clienteId = res.data.id;
           });
@@ -92,6 +94,12 @@ const ConfirmarTurnoCliente: React.FC = () => {
               placeholder="Nombre"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              required
+            />
+            <Input
+              placeholder="Apellido"
+              value={apellido}
+              onChange={(e) => setApellido(e.target.value)}
               required
             />
             <Input
