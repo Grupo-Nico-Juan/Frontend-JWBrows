@@ -32,7 +32,7 @@ function App() {
 
     <MainLayout>
       <Routes >
-        <Route path="/" element={<Login />} />
+        <Route path="/admin" element={<Login />} />
         <Route path="/registro" element={<Registro />} />+
         <Route path="/altaUsuario" element={<AltaUsuario />} />
         <Route path="/menu-admin" element={<MenuAdmin />} />
@@ -56,7 +56,7 @@ function App() {
         <Route path="/periodos-laborales" element={<PeriodosLaboralesList />} />
         <Route path="/periodos-laborales/nuevo" element={<PeriodoLaboralForm />} />
         <Route path="/periodos-laborales/editar/:id" element={<PeriodoLaboralForm />} />
-        <Route path="/reserva/sucursal" element={<SeleccionSucursal/>} />
+        <Route path="/" element={<SeleccionSucursal/>} />
         <Route path="/reserva/servicio" element={<SeleccionServicio />} />
         <Route path="/reserva/fecha-hora" element={<SeleccionFechaHora />} />
         <Route path="/reserva/empleado" element={<SeleccionEmpleado />} />

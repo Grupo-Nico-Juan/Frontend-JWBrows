@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "@/api/AxiosInstance";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useTurno } from "@/context/TurnoContext";
 
 const ConfirmarTurnoCliente: React.FC = () => {
   const navigate = useNavigate();
@@ -14,67 +15,64 @@ const ConfirmarTurnoCliente: React.FC = () => {
   const [telefono, setTelefono] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const sucursal = JSON.parse(localStorage.getItem("sucursalSeleccionada") || "{}");
-  const servicio = JSON.parse(localStorage.getItem("servicioSeleccionado") || "{}");
-  const fecha = localStorage.getItem("fechaSeleccionada") || "";
-  const hora = localStorage.getItem("horaSeleccionada") || "";
-  const empleado = JSON.parse(localStorage.getItem("empleadoSeleccionado") || "{}");
+  const { sucursal, detalles, fechaHora, empleado } = useTurno();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!nombre || !telefono || !apellido) {
       toast.error("Completa nombre, apellido y teléfono");
       return;
     }
 
-    setLoading(true);
-    let clienteId: number | null = null;
+    if (!sucursal || detalles.length === 0 || !fechaHora || !empleado) {
+      toast.error("Faltan datos para confirmar el turno");
+      return;
+    }
 
-    axios
-      .get(`/api/Cliente/telefono/${telefono}`)
-      .then((res) => {
+    setLoading(true);
+
+    try {
+      // 1. Verificar si el cliente ya existe
+      let clienteId: number;
+      try {
+        const res = await axios.get(`/api/Cliente/telefono/${telefono}`);
         clienteId = res.data.id;
-        return Promise.resolve(); // continuar
-      })
-      .catch((err) => {
-        if (err.response && err.response.status === 404) {
-          // Cliente no existe, lo creamos
-          return axios.post("/api/Cliente", {
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          const res = await axios.post("/api/Cliente/registrar-sin-cuenta", {
             nombre,
-            telefono,
-            apellido
-          }).then((res) => {
-            clienteId = res.data.id;
+            apellido,
+            telefono
           });
+          clienteId = res.data.id;
         } else {
           throw err;
         }
-      })
-      .then(() => {
-        const fechaHora = `${fecha}T${hora}`;
-        return axios.post("/api/Turnos", {
-          fechaHora,
-          empleadaId: empleado.id,
-          clienteId,
-          detalles: [
-            {
-              servicioId: servicio.id,
-              duracionMinutos: servicio.duracionMinutos,
-              precio: servicio.precio,
-            },
-          ],
-        });
-      })
-      .then(() => {
-        toast.success("Turno agendado con éxito");
-        navigate("/");
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error("Hubo un error al agendar el turno");
-      })
-      .then(() => {
-        setLoading(false);
-      });
+      }
+
+      // 2. Preparar el body con solo servicioId
+      const body = {
+        fechaHora,
+        empleadaId: empleado.id,
+        clienteId,
+        detalles: detalles.map((d) => ({
+          turnoId: 0,
+          servicioId: d.servicio.id,
+        }))
+      };
+
+      console.log("📤 Body del POST /api/Turnos:", body);
+
+      // 3. Enviar el turno
+      await axios.post("/api/Turnos", body);
+
+      toast.success("Turno agendado con éxito");
+      navigate("/");
+    }catch (err: any) {
+      console.error("Error al agendar el turno:", err.response?.data);
+      toast.error("Hubo un error al agendar el turno");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -124,3 +122,4 @@ const ConfirmarTurnoCliente: React.FC = () => {
 };
 
 export default ConfirmarTurnoCliente;
+

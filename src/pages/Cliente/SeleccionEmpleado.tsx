@@ -1,30 +1,32 @@
-import React, { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
-import axios from "@/api/AxiosInstance"
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import axios from "@/api/AxiosInstance";
+import { useTurno } from "@/context/TurnoContext";
 
 interface Empleado {
-  id: number
-  nombre: string
-  apellido: string
+  id: number;
+  nombre: string;
+  apellido: string;
 }
 
 const SeleccionEmpleado: React.FC = () => {
-  const navigate = useNavigate()
-  const [empleados, setEmpleados] = useState<Empleado[]>([])
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate();
+  const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const sucursal = JSON.parse(localStorage.getItem("sucursalSeleccionada") || "{}")
-  const servicioId = localStorage.getItem("servicioSeleccionado")
-  const fechaHora = localStorage.getItem("fechaHoraSeleccionada")
+  const { sucursal, detalles, fechaHora, setEmpleado } = useTurno(); // usamos detalles ahora
 
   useEffect(() => {
-    if (!sucursal?.id || !servicioId || !fechaHora) {
-      navigate("/") // Redirige si falta algo
-      return
+    if (!sucursal || detalles.length === 0 || !fechaHora) {
+      navigate("/"); // Validación
+      return;
     }
+
+    // Tomamos el primer servicioId de los detalles
+    const servicioId = detalles[0].servicio.id;
 
     axios
       .get(`/api/Empleado`, {
@@ -36,13 +38,13 @@ const SeleccionEmpleado: React.FC = () => {
       })
       .then((res) => setEmpleados(res.data))
       .catch((err) => console.error("Error cargando empleados", err))
-      .then(() => setLoading(false))
-  }, [])
+      .finally(() => setLoading(false));
+  }, []);
 
-  const handleSeleccion = (empleado: Empleado) => {
-    localStorage.setItem("empleadoSeleccionado", JSON.stringify(empleado))
-    navigate("/reserva/confirmar")
-  }
+  const handleSeleccion = (emp: Empleado) => {
+    setEmpleado(emp); // Guardar en contexto
+    navigate("/reserva/confirmar");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fdf6f1]">
@@ -83,7 +85,8 @@ const SeleccionEmpleado: React.FC = () => {
         </Card>
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default SeleccionEmpleado
+export default SeleccionEmpleado;
+

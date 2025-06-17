@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { TurnoProvider } from "./context/TurnoContext";
 import './index.css';
 
 
@@ -14,7 +15,9 @@ ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <TurnoProvider>
+          <App />
+        </TurnoProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

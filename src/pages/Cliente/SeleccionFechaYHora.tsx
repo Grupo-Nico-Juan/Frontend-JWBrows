@@ -1,25 +1,27 @@
-import React, { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ChevronDownIcon } from "lucide-react"
-import { motion } from "framer-motion"
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronDownIcon } from "lucide-react";
+import { motion } from "framer-motion";
+import { useTurno } from "@/context/TurnoContext"; // 👈
 
 const SeleccionFechaHora: React.FC = () => {
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const [date, setDate] = useState<Date | undefined>()
-  const [time, setTime] = useState("10:00:00")
-  const navigate = useNavigate()
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [date, setDate] = useState<Date | undefined>();
+  const [time, setTime] = useState("10:00:00");
+  const navigate = useNavigate();
+  const { setFechaHora } = useTurno(); // 👈
 
   const handleConfirmar = () => {
-    if (!date || !time) return
-    const fechaHora = `${date.toISOString().split("T")[0]}T${time}`
-    localStorage.setItem("fechaHoraSeleccionada", fechaHora)
-    navigate("/reserva/empleado") 
-  }
+    if (!date || !time) return;
+    const fechaHora = `${date.toISOString().split("T")[0]}T${time}`;
+    setFechaHora(fechaHora); // 👈 Guardar en contexto
+    navigate("/reserva/empleado");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fdf6f1]">
@@ -50,8 +52,8 @@ const SeleccionFechaHora: React.FC = () => {
                       selected={date}
                       captionLayout="dropdown"
                       onSelect={(d) => {
-                        setDate(d)
-                        setCalendarOpen(false)
+                        setDate(d);
+                        setCalendarOpen(false);
                       }}
                     />
                   </PopoverContent>
@@ -78,7 +80,7 @@ const SeleccionFechaHora: React.FC = () => {
         </Card>
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default SeleccionFechaHora
+export default SeleccionFechaHora;

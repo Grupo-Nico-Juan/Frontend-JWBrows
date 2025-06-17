@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import axios from "@/api/AxiosInstance";
 import { motion } from "framer-motion";
+import { useTurno } from "@/context/TurnoContext"; // 👈
 
 interface Servicio {
   id: number;
@@ -17,16 +18,17 @@ const SeleccionServicio: React.FC = () => {
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { agregarDetalle } = useTurno(); // 👈 Usamos el nuevo método
 
   useEffect(() => {
     axios.get("/api/Servicio")
       .then(res => setServicios(res.data))
       .catch(err => console.error("Error cargando servicios", err))
-      .then(() => setLoading(false));
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSeleccion = (servicio: Servicio) => {
-    localStorage.setItem("servicioSeleccionado", JSON.stringify(servicio));
+    agregarDetalle(servicio); // 👈 Agrega como detalle
     navigate("/reserva/fecha-hora");
   };
 
@@ -74,3 +76,4 @@ const SeleccionServicio: React.FC = () => {
 };
 
 export default SeleccionServicio;
+

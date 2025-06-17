@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import axios from "@/api/AxiosInstance";
 import { motion } from "framer-motion";
+import { useTurno } from "@/context/TurnoContext"; 
 
 interface Sucursal {
   id: number;
@@ -15,16 +16,18 @@ const SeleccionSucursal: React.FC = () => {
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { setSucursal, resetTurno } = useTurno(); // 👈 Usar el contexto
 
   useEffect(() => {
+    resetTurno(); // 👈 Limpiar datos anteriores si los hubiera
     axios.get("/api/Sucursal")
       .then(res => setSucursales(res.data))
       .catch(err => console.error("Error cargando sucursales", err))
-      .then(() => setLoading(false));
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSeleccion = (sucursal: Sucursal) => {
-    localStorage.setItem("sucursalSeleccionada", JSON.stringify(sucursal));
+    setSucursal(sucursal); // 👈 Guardar en contexto
     navigate("/reserva/servicio");
   };
 
