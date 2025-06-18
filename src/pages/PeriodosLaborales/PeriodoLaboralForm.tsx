@@ -149,7 +149,7 @@ const PeriodoLaboralForm: React.FC = () => {
                 <>
                   <Input type="date" name="desde" value={form.desde} onChange={handleChange} required />
                   <Input type="date" name="hasta" value={form.hasta} onChange={handleChange} required />
-                  <Input name="motivo" placeholder="Motivo (opcional)" value={form.motivo} onChange={handleChange} />
+                  <Input name="motivo" placeholder="Motivo" value={form.motivo} onChange={handleChange} required />
                 </>
               )}
 

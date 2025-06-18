@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 
 interface PeriodoLaboral {
   id: number;
-  desde: string;
-  hasta: string;
-  motivo: string;
+  desde?: string;
+  hasta?: string;
+  motivo?: string;
   esLicencia: boolean;
+  diaSemana?: string;
+  horaInicio?: string;
+  horaFin?: string;
 }
 
 const PeriodosLaboralesList: React.FC = () => {
@@ -36,6 +39,9 @@ const PeriodosLaboralesList: React.FC = () => {
     }
   };
 
+  const horarios = periodos.filter(p => !p.esLicencia);
+  const licencias = periodos.filter(p => p.esLicencia);
+
   return (
     <div className="max-w-3xl mx-auto mt-10">
       <h2 className="text-2xl mb-4 text-[#7c3aed]">Periodos Laborales</h2>
@@ -46,26 +52,68 @@ const PeriodosLaboralesList: React.FC = () => {
         + Nuevo Periodo
       </Button>
       {error && <div className="text-red-500 mb-4">{error}</div>}
-      {periodos.length === 0 ? (
-        <div className="text-gray-500">No hay periodos laborales registrados.</div>
+
+      {/* Horarios Habituales */}
+      <h3 className="text-xl mt-6 mb-2 text-[#7a5b4c]">Horarios Habituales</h3>
+      {horarios.length === 0 ? (
+        <div className="text-gray-500 mb-4">No hay horarios habituales registrados.</div>
       ) : (
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-white shadow rounded-lg mb-8">
           <div className="grid grid-cols-5 gap-4 p-4 font-semibold text-gray-700 bg-gray-100 rounded-t-lg">
-            <div>Desde</div>
-            <div>Hasta</div>
-            <div>Motivo</div>
-            <div>Licencia</div>
-            <div className="text-center">Acciones</div>
+            <div>Día</div>
+            <div>Hora Inicio</div>
+            <div>Hora Fin</div>
+            <div className="text-center col-span-2">Acciones</div>
           </div>
-          {periodos.map(periodo => (
+          {horarios.map(periodo => (
             <div
               key={periodo.id}
               className="grid grid-cols-5 gap-4 p-4 border-b last:border-b-0"
             >
-              <div>{new Date(periodo.desde).toLocaleDateString('es-ES')}</div>
-              <div>{new Date(periodo.hasta).toLocaleDateString('es-ES')}</div>
-              <div>{periodo.motivo}</div>
-              <div>{periodo.esLicencia ? 'Sí' : 'No'}</div>
+              <div>{periodo.diaSemana ?? '-'}</div>
+              <div>{periodo.horaInicio ?? '-'}</div>
+              <div>{periodo.horaFin ?? '-'}</div>
+              <div className="flex justify-center col-span-2">
+                <Button
+                  variant="link"
+                  className="text-blue-500 hover:text-blue-700"
+                  onClick={() => navigate(`/periodos-laborales/editar/${periodo.id}?empleadaId=${empleadaId}`)}
+                >
+                  Editar
+                </Button>
+                <Button
+                  variant="link"
+                  className="text-red-500 hover:text-red-700 ml-2"
+                  onClick={() => handleDelete(periodo.id)}
+                >
+                  Eliminar
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Licencias */}
+      <h3 className="text-xl mt-6 mb-2 text-[#7a5b4c]">Licencias</h3>
+      {licencias.length === 0 ? (
+        <div className="text-gray-500">No hay licencias registradas.</div>
+      ) : (
+        <div className="bg-white shadow rounded-lg">
+          <div className="grid grid-cols-4 gap-4 p-4 font-semibold text-gray-700 bg-gray-100 rounded-t-lg">
+            <div>Desde</div>
+            <div>Hasta</div>
+            <div>Motivo</div>
+            <div className="text-center">Acciones</div>
+          </div>
+          {licencias.map(periodo => (
+            <div
+              key={periodo.id}
+              className="grid grid-cols-4 gap-4 p-4 border-b last:border-b-0"
+            >
+              <div>{periodo.desde ? new Date(periodo.desde).toLocaleDateString('es-ES') : '-'}</div>
+              <div>{periodo.hasta ? new Date(periodo.hasta).toLocaleDateString('es-ES') : '-'}</div>
+              <div>{periodo.motivo ?? '-'}</div>
               <div className="flex justify-center">
                 <Button
                   variant="link"
