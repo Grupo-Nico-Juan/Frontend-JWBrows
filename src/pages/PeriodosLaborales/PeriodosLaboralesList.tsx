@@ -70,7 +70,7 @@ const PeriodosLaboralesList: React.FC = () => {
                 <Button
                   variant="link"
                   className="text-blue-500 hover:text-blue-700"
-                  onClick={() => navigate(`/periodos-laborales/${periodo.id}?empleadaId=${empleadaId}`)}
+                  onClick={() => navigate(`/periodos-laborales/editar/${periodo.id}?empleadaId=${empleadaId}`)}
                 >
                   Editar
                 </Button>

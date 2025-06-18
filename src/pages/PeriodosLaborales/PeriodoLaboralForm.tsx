@@ -6,13 +6,27 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { validarPeriodoLaboral, PeriodoLaboralFormData } from './ValidadorPeriodoLaboral';
 
 interface Empleada {
   id: number;
   nombre: string;
   apellido: string;
 }
+
+interface PeriodoLaboralFormData {
+  empleadaId: number | '';
+  tipo: 'HorarioHabitual' | 'Licencia';
+  diaSemana: string;
+  horaInicio: string;
+  horaFin: string;
+  desde: string;
+  hasta: string;
+  motivo: string;
+}
+
+const diasSemana = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+];
 
 const PeriodoLaboralForm: React.FC = () => {
   const navigate = useNavigate();
@@ -21,82 +35,80 @@ const PeriodoLaboralForm: React.FC = () => {
   const empleadaIdFromQuery = new URLSearchParams(location.search).get('empleadaId');
   const editando = !!id;
 
+  const [empleadas, setEmpleadas] = useState<Empleada[]>([]);
   const [form, setForm] = useState<PeriodoLaboralFormData>({
     empleadaId: empleadaIdFromQuery ? Number(empleadaIdFromQuery) : '',
+    tipo: 'HorarioHabitual',
+    diaSemana: 'Monday',
+    horaInicio: '',
+    horaFin: '',
     desde: '',
     hasta: '',
-    motivo: '',
-    esLicencia: false
+    motivo: ''
   });
-
-  const [empleadas, setEmpleadas] = useState<Empleada[]>([]);
-  const [errores, setErrores] = useState<Partial<Record<keyof PeriodoLaboralFormData, string>>>({});
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     axios.get('/api/Empleado')
-      .then(res => {
-        console.log('Empleadas:', res.data); // <-- Agrega esto
-        setEmpleadas(res.data);
-      })
+      .then(res => setEmpleadas(res.data))
       .catch(() => setError('No se pudieron cargar las empleadas'));
   }, []);
 
   useEffect(() => {
     if (editando && id) {
-      axios
-        .get(`/api/PeriodoLaboral/${id}`)
-        .then((res) => setForm({
-          empleadaId: res.data.empleadaId ?? '',
-          desde: res.data.desde ? res.data.desde.substring(0, 10) : '',
-          hasta: res.data.hasta ? res.data.hasta.substring(0, 10) : '',
-          motivo: res.data.motivo ?? '',
-          esLicencia: res.data.esLicencia ?? false
-        }))
-        .catch(() => setError('No se pudo cargar el periodo laboral'));
+      axios.get(`/api/PeriodoLaboral/${id}`)
+        .then(res => {
+          const data = res.data;
+          setForm({
+            empleadaId: data.empleadaId,
+            tipo: data.tipo,
+            diaSemana: data.diaSemana ?? 'Monday',
+            horaInicio: data.horaInicio ?? '',
+            horaFin: data.horaFin ?? '',
+            desde: data.desde ? data.desde.substring(0, 10) : '',
+            hasta: data.hasta ? data.hasta.substring(0, 10) : '',
+            motivo: data.motivo ?? ''
+          });
+        })
+        .catch(() => setError('Error al cargar el período laboral'));
     }
   }, [editando, id]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setForm((f) => ({
-      ...f,
-      [name]:
-        type === 'checkbox'
-          ? (e.target as HTMLInputElement).checked
-          : name === 'empleadaId'
-          ? value === '' ? '' : Number(value)
-          : value
-    }));
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const nuevosErrores = validarPeriodoLaboral(form);
-    setErrores(nuevosErrores);
-    if (Object.keys(nuevosErrores).length > 0) return;
     setError('');
-    try {
-      if (editando && id) {
-        await axios.put(`/api/PeriodoLaboral/${id}`, { ...form, id: Number(id) });
-        toast.success('Periodo laboral actualizado correctamente');
-      } else {
-        await axios.post('/api/PeriodoLaboral', form);
-        toast.success('Periodo laboral creado correctamente');
-      }
-      navigate(`/periodos-laborales?empleadaId=${form.empleadaId}`);
-    } catch (err) {
-      setError('Error al guardar periodo laboral');
-    }
+
+    const dataToSend = {
+      empleadaId: form.empleadaId,
+      tipo: form.tipo,
+      diaSemana: form.tipo === 'HorarioHabitual' ? form.diaSemana : null,
+      horaInicio: form.tipo === 'HorarioHabitual' ? form.horaInicio : null,
+      horaFin: form.tipo === 'HorarioHabitual' ? form.horaFin : null,
+      desde: form.tipo === 'Licencia' ? form.desde : null,
+      hasta: form.tipo === 'Licencia' ? form.hasta : null,
+      motivo: form.tipo === 'Licencia' ? form.motivo : null
+    };
+
+    const request = editando && id
+      ? axios.put(`/api/PeriodoLaboral/${id}`, dataToSend)
+      : axios.post('/api/PeriodoLaboral', dataToSend);
+
+    request
+      .then(() => {
+        toast.success(`Periodo laboral ${editando ? 'actualizado' : 'creado'} correctamente`);
+        navigate(`/periodos-laborales?empleadaId=${form.empleadaId}`);
+      })
+      .catch(() => setError('Error al guardar el período laboral'));
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fdf6f1]">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <Card className="w-full max-w-lg p-6 shadow-xl border border-[#e6dcd4] bg-[#fffaf5]">
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl text-[#6e4b3a]">
@@ -107,52 +119,40 @@ const PeriodoLaboralForm: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <select
                 name="empleadaId"
-                value={form.empleadaId === '' ? '' : String(form.empleadaId)}
+                value={form.empleadaId}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
                 required
-                disabled={!!empleadaIdFromQuery && empleadaIdFromQuery !== 'null'}
               >
                 <option value="">Seleccionar empleada</option>
                 {empleadas.map(e => (
                   <option key={e.id} value={e.id}>{e.nombre} {e.apellido}</option>
                 ))}
               </select>
-              {errores.empleadaId && <p className="text-sm text-red-500">{errores.empleadaId}</p>}
-              <Input
-                name="desde"
-                type="date"
-                placeholder="Desde"
-                value={form.desde}
-                onChange={handleChange}
-                required
-              />
-              {errores.desde && <p className="text-sm text-red-500">{errores.desde}</p>}
-              <Input
-                name="hasta"
-                type="date"
-                placeholder="Hasta"
-                value={form.hasta}
-                onChange={handleChange}
-                required
-              />
-              {errores.hasta && <p className="text-sm text-red-500">{errores.hasta}</p>}
-              <Input
-                name="motivo"
-                placeholder="Motivo (opcional)"
-                value={form.motivo}
-                onChange={handleChange}
-              />
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="esLicencia"
-                  checked={form.esLicencia}
-                  onChange={handleChange}
-                  id="esLicencia"
-                />
-                <label htmlFor="esLicencia">¿Es licencia?</label>
-              </div>
+
+              <select name="tipo" value={form.tipo} onChange={handleChange} className="w-full border rounded px-3 py-2">
+                <option value="HorarioHabitual">Horario Habitual</option>
+                <option value="Licencia">Licencia</option>
+              </select>
+
+              {form.tipo === 'HorarioHabitual' && (
+                <>
+                  <select name="diaSemana" value={form.diaSemana} onChange={handleChange} className="w-full border rounded px-3 py-2">
+                    {diasSemana.map(dia => <option key={dia} value={dia}>{dia}</option>)}
+                  </select>
+                  <Input type="time" name="horaInicio" value={form.horaInicio} onChange={handleChange} required />
+                  <Input type="time" name="horaFin" value={form.horaFin} onChange={handleChange} required />
+                </>
+              )}
+
+              {form.tipo === 'Licencia' && (
+                <>
+                  <Input type="date" name="desde" value={form.desde} onChange={handleChange} required />
+                  <Input type="date" name="hasta" value={form.hasta} onChange={handleChange} required />
+                  <Input name="motivo" placeholder="Motivo (opcional)" value={form.motivo} onChange={handleChange} />
+                </>
+              )}
+
               <div className="flex justify-end gap-4 pt-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
@@ -165,10 +165,7 @@ const PeriodoLaboralForm: React.FC = () => {
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    type="submit"
-                    className="btn-jmbrows"
-                  >
+                  <Button type="submit" className="btn-jmbrows">
                     {editando ? 'Guardar cambios' : 'Crear periodo'}
                   </Button>
                 </motion.div>

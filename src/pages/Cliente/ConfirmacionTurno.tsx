@@ -62,12 +62,16 @@ const ConfirmarTurnoCliente: React.FC = () => {
 
       console.log("📤 Body del POST /api/Turnos:", body);
 
+      const fecha = new Date(fechaHora);
+      console.log("🕒 Día:", fecha.getDay(), "Hora:", fecha.toTimeString());
+
+      
       // 3. Enviar el turno
       await axios.post("/api/Turnos", body);
 
       toast.success("Turno agendado con éxito");
       navigate("/");
-    }catch (err: any) {
+    } catch (err: any) {
       console.error("Error al agendar el turno:", err.response?.data);
       toast.error("Hubo un error al agendar el turno");
     } finally {
