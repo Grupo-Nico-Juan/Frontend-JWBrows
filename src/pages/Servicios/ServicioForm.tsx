@@ -7,11 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
+interface Sucursal {
+  id: number;
+  nombre: string;
+}
+
+interface Sector {
+  id: number;
+  nombre: string;
+  sucursalId: number;
+}
+
 interface ServicioFormData {
   nombre: string;
   descripcion: string;
   duracionMinutos: number | '';
   precio: number | '';
+  sucursalId: number | '';
+  sectorId: number | '';
 }
 
 const ServicioForm: React.FC = () => {
@@ -23,28 +36,71 @@ const ServicioForm: React.FC = () => {
     nombre: '',
     descripcion: '',
     duracionMinutos: '',
-    precio: ''
+    precio: '',
+    sucursalId: '',
+    sectorId: ''
   });
 
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [sectores, setSectores] = useState<Sector[]>([]);
   const [error, setError] = useState<string>('');
 
+  // Cargar sucursales al montar
+  useEffect(() => {
+    axios.get('/api/Sucursal')
+      .then(res => setSucursales(res.data))
+      .catch(() => setError('No se pudieron cargar las sucursales'));
+  }, []);
+
+  // Cargar sectores cuando cambia la sucursal seleccionada
+  useEffect(() => {
+    if (form.sucursalId) {
+      axios.get(`/api/Sector`)
+        .then(res => {
+          // Filtrar sectores por sucursal seleccionada
+          setSectores(res.data.filter((s: Sector) => s.sucursalId === form.sucursalId));
+        })
+        .catch(() => setError('No se pudieron cargar los sectores'));
+    } else {
+      setSectores([]);
+      setForm(f => ({ ...f, sectorId: '' }));
+    }
+  }, [form.sucursalId]);
+
+  // Cargar datos del servicio si está en modo edición
   useEffect(() => {
     if (editando && id) {
       axios
-        .get<ServicioFormData>(`/api/Servicio/${id}`)
-        .then((res) => setForm(res.data))
+        .get(`/api/Servicio/${id}`)
+        .then((res) => {
+          setForm({
+            nombre: res.data.nombre ?? '',
+            descripcion: res.data.descripcion ?? '',
+            duracionMinutos: res.data.duracionMinutos ?? '',
+            precio: res.data.precio ?? '',
+            sucursalId: res.data.sucursalId ?? '',
+            sectorId: res.data.sectorId ?? ''
+          });
+        })
         .catch(() => setError('No se pudo cargar el servicio'));
     }
   }, [editando, id]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((f) => ({
       ...f,
-      [name]: name === 'duracionMinutos' || name === 'precio'
-        ? value === '' ? '' : Number(value)
-        : value
+      [name]:
+        name === 'duracionMinutos' || name === 'precio'
+          ? value === '' ? '' : Number(value)
+          : name === 'sucursalId' || name === 'sectorId'
+          ? value === '' ? '' : Number(value)
+          : value
     }));
+    // Si cambia la sucursal, resetea el sector
+    if (name === 'sucursalId') {
+      setForm(f => ({ ...f, sectorId: '' }));
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -111,6 +167,31 @@ const ServicioForm: React.FC = () => {
                 required
                 min={0}
               />
+              <select
+                name="sucursalId"
+                value={form.sucursalId === '' ? '' : String(form.sucursalId)}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+                required
+              >
+                <option value="">Seleccionar sucursal</option>
+                {sucursales.map(s => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
+              <select
+                name="sectorId"
+                value={form.sectorId === '' ? '' : String(form.sectorId)}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+                required
+                disabled={!form.sucursalId}
+              >
+                <option value="">Seleccionar sector</option>
+                {sectores.map(s => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
               <div className="flex justify-end gap-4 pt-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../api/AxiosInstance';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface Servicio {
   id: number;
@@ -8,36 +9,27 @@ interface Servicio {
   descripcion: string;
   duracionMinutos: number;
   precio: number;
+  sucursalId: number;
+  sectorId: number;
 }
 
-const tableStyle: React.CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  marginTop: 24,
-  background: '#fff',
-  borderRadius: 8,
-  boxShadow: '0 2px 8px #0001'
-};
+interface Sucursal {
+  id: number;
+  nombre: string;
+}
 
-const thtdStyle: React.CSSProperties = {
-  border: '1px solid #ddd',
-  padding: 8,
-  textAlign: 'left'
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: '6px 12px',
-  marginRight: 8,
-  borderRadius: 4,
-  border: 'none',
-  background: '#7c3aed',
-  color: 'white',
-  fontWeight: 600,
-  cursor: 'pointer'
-};
+interface Sector {
+  id: number;
+  nombre: string;
+  sucursalId: number;
+}
 
 const ServiciosList: React.FC = () => {
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sucursalId, setSucursalId] = useState<number | ''>('');
+  const [sectorId, setSectorId] = useState<number | ''>('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -45,7 +37,25 @@ const ServiciosList: React.FC = () => {
     axios.get('/api/Servicio')
       .then(res => setServicios(res.data))
       .catch(() => setError('Error al cargar servicios'));
+    axios.get('/api/Sucursal')
+      .then(res => setSucursales(res.data))
+      .catch(() => setError('Error al cargar sucursales'));
+    axios.get('/api/Sector')
+      .then(res => setSectores(res.data))
+      .catch(() => setError('Error al cargar sectores'));
   }, []);
+
+  // Filtrar sectores por sucursal seleccionada
+  const sectoresFiltrados = sucursalId
+    ? sectores.filter(s => s.sucursalId === sucursalId)
+    : sectores;
+
+  // Filtrar servicios por sucursal y sector seleccionados
+  const serviciosFiltrados = servicios.filter(servicio => {
+    if (sucursalId && servicio.sucursalId !== sucursalId) return false;
+    if (sectorId && servicio.sectorId !== sectorId) return false;
+    return true;
+  });
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('¿Eliminar este servicio?')) return;
@@ -58,51 +68,73 @@ const ServiciosList: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '2rem auto' }}>
-      <h2 style={{ color: '#7c3aed' }}>Servicios</h2>
-      <button
-        style={{ ...buttonStyle, marginBottom: 16, background: '#10b981' }}
-        onClick={() => navigate('/servicios/nuevo')}
-      >
-        + Nuevo Servicio
-      </button>
-      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
-      <table style={tableStyle}>
+    <div className="max-w-5xl mx-auto mt-10">
+      <h2 className="text-2xl mb-4 text-[#7c3aed]">Servicios</h2>
+      <div className="flex gap-4 mb-4">
+        <select
+          className="border rounded px-3 py-2"
+          value={sucursalId === '' ? '' : String(sucursalId)}
+          onChange={e => {
+            const value = e.target.value === '' ? '' : Number(e.target.value);
+            setSucursalId(value);
+            setSectorId(''); // reset sector al cambiar sucursal
+          }}
+        >
+          <option value="">Todas las sucursales</option>
+          {sucursales.map(s => (
+            <option key={s.id} value={s.id}>{s.nombre}</option>
+          ))}
+        </select>
+        <select
+          className="border rounded px-3 py-2"
+          value={sectorId === '' ? '' : String(sectorId)}
+          onChange={e => setSectorId(e.target.value === '' ? '' : Number(e.target.value))}
+          disabled={!sucursalId}
+        >
+          <option value="">Todos los sectores</option>
+          {sectoresFiltrados.map(s => (
+            <option key={s.id} value={s.id}>{s.nombre}</option>
+          ))}
+        </select>
+        <Button onClick={() => navigate('/servicios/nuevo')}>+ Nuevo Servicio</Button>
+      </div>
+      {error && <div className="text-red-500 mb-2">{error}</div>}
+      <table className="w-full border-collapse bg-white rounded shadow">
         <thead>
           <tr>
-            <th style={thtdStyle}>Nombre</th>
-            <th style={thtdStyle}>Descripción</th>
-            <th style={thtdStyle}>Duración (min)</th>
-            <th style={thtdStyle}>Precio</th>
-            <th style={thtdStyle}>Acciones</th>
+            <th className="border p-2">Nombre</th>
+            <th className="border p-2">Descripción</th>
+            <th className="border p-2">Duración</th>
+            <th className="border p-2">Precio</th>
+            <th className="border p-2">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {servicios.map(servicio => (
+          {serviciosFiltrados.map(servicio => (
             <tr key={servicio.id}>
-              <td style={thtdStyle}>{servicio.nombre}</td>
-              <td style={thtdStyle}>{servicio.descripcion}</td>
-              <td style={thtdStyle}>{servicio.duracionMinutos}</td>
-              <td style={thtdStyle}>${servicio.precio}</td>
-              <td style={thtdStyle}>
-                <button
-                  style={buttonStyle}
+                  <td className="border p-2">{servicio.nombre}</td>
+              <td className="border p-2">{servicio.descripcion}</td>
+              <td className="border p-2">{servicio.duracionMinutos} min</td>
+              <td className="border p-2">${servicio.precio}</td>
+              <td className="border p-2">
+                <Button
                   onClick={() => navigate(`/servicios/editar/${servicio.id}`)}
+                  className="mr-2"
                 >
                   Editar
-                </button>
-                <button
-                  style={{ ...buttonStyle, background: '#ef4444' }}
+                </Button>
+                <Button
+                  variant="destructive"
                   onClick={() => handleDelete(servicio.id)}
                 >
                   Eliminar
-                </button>
+                </Button>
               </td>
             </tr>
           ))}
-          {servicios.length === 0 && (
+          {serviciosFiltrados.length === 0 && (
             <tr>
-              <td style={thtdStyle} colSpan={5}>No hay servicios registrados.</td>
+              <td colSpan={5} className="border p-2 text-center">No hay servicios registrados.</td>
             </tr>
           )}
         </tbody>
