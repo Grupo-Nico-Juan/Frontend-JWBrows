@@ -39,6 +39,7 @@ interface TurnoContextType {
   agregarDetalle: (servicio: Servicio) => void;
   quitarDetalle: (servicioId: number) => void;
   servicios: Servicio[]; // derivado
+  agregarDetalles: (servicios: Servicio[]) => void; 
 
   fechaHora: string;
   setFechaHora: (f: string) => void;
@@ -70,6 +71,15 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     );
   };
 
+  const agregarDetalles = (servicios: Servicio[]) => {
+    setDetalles((prev) => {
+      const nuevosDetalles = servicios
+        .filter((s) => !prev.find((d) => d.servicio.id === s.id))
+        .map((s) => ({ servicio: s }));
+      return [...prev, ...nuevosDetalles];
+    });
+  };
+
   const quitarDetalle = (servicioId: number) => {
     setDetalles((prev) => prev.filter((d) => d.servicio.id !== servicioId));
   };
@@ -91,6 +101,7 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setSucursal,
         detalles,
         agregarDetalle,
+        agregarDetalles,
         quitarDetalle,
         servicios,
         fechaHora,
