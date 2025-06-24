@@ -23,7 +23,8 @@ import SeleccionServicio from './pages/Cliente/SeleccionServicio';
 import SeleccionFechaHora from './pages/Cliente/SeleccionFechaYHora';
 import SeleccionEmpleado from './pages/Cliente/SeleccionEmpleado';
 import ConfirmacionTurno from './pages/Cliente/ConfirmacionTurno';
-
+import AsignarHabilidadesEmpleado from './pages/Empleado/AsignarHabilidadesEmpleado';
+import AsignarSectoresEmpleado from './pages/Empleado/AsignarSectoresEmpleado';
 
 function App() {
 
@@ -39,6 +40,8 @@ function App() {
         <Route path="/empleados" element={<EmpleadosList />} />
         <Route path="/empleados/nuevo" element={<EmpleadoForm />} />
         <Route path="/empleados/editar/:id" element={<EmpleadoForm />} />
+        <Route path="/empleados/:id/habilidades" element={<AsignarHabilidadesEmpleado />} />
+        <Route path="/empleados/:id/sectores" element={<AsignarSectoresEmpleado />} />
         <Route path="/turnos" element={<Turnos />} />
         <Route path='/asignarTurno' element={<AsignarTurno />} />
         <Route path="/servicios" element={<ServiciosList />} />
