@@ -1,146 +1,146 @@
-import React, { useEffect, useState } from 'react';
-import axios from '../../api/AxiosInstance';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from "react"
+import axios from "../../api/AxiosInstance"
+import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
 
 interface Servicio {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  duracionMinutos: number;
-  precio: number;
-  sucursalId: number;
-  sectorId: number;
-}
-
-interface Sucursal {
-  id: number;
-  nombre: string;
-}
-
-interface Sector {
-  id: number;
-  nombre: string;
-  sucursalId: number;
+  id: number
+  nombre: string
+  descripcion: string
+  duracionMinutos: number
+  precio: number
 }
 
 const ServiciosList: React.FC = () => {
-  const [servicios, setServicios] = useState<Servicio[]>([]);
-  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
-  const [sectores, setSectores] = useState<Sector[]>([]);
-  const [sucursalId, setSucursalId] = useState<number | ''>('');
-  const [sectorId, setSectorId] = useState<number | ''>('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [servicios, setServicios] = useState<Servicio[]>([])
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    axios.get('/api/Servicio')
-      .then(res => setServicios(res.data))
-      .catch(() => setError('Error al cargar servicios'));
-    axios.get('/api/Sucursal')
-      .then(res => setSucursales(res.data))
-      .catch(() => setError('Error al cargar sucursales'));
-    axios.get('/api/Sector')
-      .then(res => setSectores(res.data))
-      .catch(() => setError('Error al cargar sectores'));
-  }, []);
-
-  // Filtrar sectores por sucursal seleccionada
-  const sectoresFiltrados = sucursalId
-    ? sectores.filter(s => s.sucursalId === sucursalId)
-    : sectores;
-
-  // Filtrar servicios por sucursal y sector seleccionados
-  const serviciosFiltrados = servicios.filter(servicio => {
-    if (sucursalId && servicio.sucursalId !== sucursalId) return false;
-    if (sectorId && servicio.sectorId !== sectorId) return false;
-    return true;
-  });
+    const fetchServicios = async () => {
+      try {
+        const res = await axios.get<Servicio[]>("/api/Servicio")
+        setServicios(res.data)
+      } catch {
+        setError("Error al cargar los servicios")
+      }
+    }
+    fetchServicios()
+  }, [])
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('¿Eliminar este servicio?')) return;
+    if (!window.confirm("¿Eliminar este servicio?")) return
     try {
-      await axios.delete(`/api/Servicio/${id}`);
-      setServicios(servicios.filter(s => s.id !== id));
+      await axios.delete(`/api/Servicio/${id}`)
+      setServicios(servicios.filter((s) => s.id !== id))
     } catch {
-      setError('No se pudo eliminar el servicio');
+      setError("No se pudo eliminar el servicio")
     }
-  };
+  }
 
   return (
-    <div className="max-w-5xl mx-auto mt-10">
-      <h2 className="text-2xl mb-4 text-[#7c3aed]">Servicios</h2>
-      <div className="flex gap-4 mb-4">
-        <select
-          className="border rounded px-3 py-2"
-          value={sucursalId === '' ? '' : String(sucursalId)}
-          onChange={e => {
-            const value = e.target.value === '' ? '' : Number(e.target.value);
-            setSucursalId(value);
-            setSectorId(''); // reset sector al cambiar sucursal
-          }}
-        >
-          <option value="">Todas las sucursales</option>
-          {sucursales.map(s => (
-            <option key={s.id} value={s.id}>{s.nombre}</option>
-          ))}
-        </select>
-        <select
-          className="border rounded px-3 py-2"
-          value={sectorId === '' ? '' : String(sectorId)}
-          onChange={e => setSectorId(e.target.value === '' ? '' : Number(e.target.value))}
-          disabled={!sucursalId}
-        >
-          <option value="">Todos los sectores</option>
-          {sectoresFiltrados.map(s => (
-            <option key={s.id} value={s.id}>{s.nombre}</option>
-          ))}
-        </select>
-        <Button onClick={() => navigate('/servicios/nuevo')}>+ Nuevo Servicio</Button>
-      </div>
-      {error && <div className="text-red-500 mb-2">{error}</div>}
-      <table className="w-full border-collapse bg-white rounded shadow">
-        <thead>
-          <tr>
-            <th className="border p-2">Nombre</th>
-            <th className="border p-2">Descripción</th>
-            <th className="border p-2">Duración</th>
-            <th className="border p-2">Precio</th>
-            <th className="border p-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {serviciosFiltrados.map(servicio => (
-            <tr key={servicio.id}>
-                  <td className="border p-2">{servicio.nombre}</td>
-              <td className="border p-2">{servicio.descripcion}</td>
-              <td className="border p-2">{servicio.duracionMinutos} min</td>
-              <td className="border p-2">${servicio.precio}</td>
-              <td className="border p-2">
+    <div className="min-h-screen flex items-center justify-center bg-[#fdf6f1] px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Card className="w-full max-w-5xl bg-[#fdf6f1] border border-[#e0d6cf]">
+          <CardHeader>
+            <CardTitle className="text-2xl text-[#6d4c41]">Servicios</CardTitle>
+            <div className="mt-2">
+              <motion.div
+                className="inline-block origin-left"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
-                  onClick={() => navigate(`/servicios/editar/${servicio.id}`)}
-                  className="mr-2"
+                  className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+                  onClick={() => navigate("/servicios/nuevo")}
                 >
-                  Editar
+                  Nuevo Servicio
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDelete(servicio.id)}
-                >
-                  Eliminar
-                </Button>
-              </td>
-            </tr>
-          ))}
-          {serviciosFiltrados.length === 0 && (
-            <tr>
-              <td colSpan={5} className="border p-2 text-center">No hay servicios registrados.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+              </motion.div>
+            </div>
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#f3e5e1]">
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Duración</TableHead>
+                    <TableHead>Precio</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {servicios.map((servicio) => (
+                    <TableRow key={servicio.id}>
+                      <TableCell>{servicio.nombre}</TableCell>
+                      <TableCell>{servicio.descripcion}</TableCell>
+                      <TableCell>{servicio.duracionMinutos} min</TableCell>
+                      <TableCell>${servicio.precio}</TableCell>
+                      <TableCell className="flex gap-2 flex-wrap">
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            className="bg-[#6d4c41] text-white hover:bg-[#5d4037]"
+                            onClick={() => navigate(`/servicios/editar/${servicio.id}`)}
+                          >
+                            Editar
+                          </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(servicio.id)}
+                          >
+                            Eliminar
+                          </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            className="bg-[#8d6e63] text-white hover:bg-[#7b5e53]"
+                            onClick={() => navigate(`/servicios/${servicio.id}/habilidades`)}
+                          >
+                            Habilidades
+                          </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            className="bg-[#795548] text-white hover:bg-[#6d4c41]"
+                            onClick={() => navigate(`/servicios/${servicio.id}/sectores`)}
+                          >
+                            Sectores
+                          </Button>
+                        </motion.div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
-  );
-};
+  )
+}
 
-export default ServiciosList;
+export default ServiciosList

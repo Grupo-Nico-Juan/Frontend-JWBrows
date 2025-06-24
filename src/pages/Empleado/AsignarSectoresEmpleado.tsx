@@ -62,6 +62,7 @@ const AsignarSectoresEmpleado: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#f3e5e1]">
+                <TableHead>Sucursal</TableHead>
                 <TableHead>Sector</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead>Asignado</TableHead>
@@ -73,6 +74,7 @@ const AsignarSectoresEmpleado: React.FC = () => {
                 const estaAsignado = asignados.includes(sector.id)
                 return (
                   <TableRow key={sector.id}>
+                    <TableCell>{sector.sucursalId}</TableCell>
                     <TableCell>{sector.nombre}</TableCell>
                     <TableCell>{sector.descripcion}</TableCell>
                     <TableCell>{estaAsignado ? "Sí" : "No"}</TableCell>
