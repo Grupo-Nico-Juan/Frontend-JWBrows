@@ -62,12 +62,12 @@ const SeleccionServicio: React.FC = () => {
   const sectorActual = sectores.find((s) => s.id === sectorActivo);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-[#fdf6f1] px-4 py-6">
+    <div className="flex flex-col justify-between bg-[#fdf6f1] min-h-[100dvh] px-4 py-6">
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-6xl mx-auto"
+        className="w-full max-w-6xl mx-auto pb-16"
       >
         {/* Navegación de sectores */}
         <NavigationMenu className="mb-6 justify-center">
@@ -89,7 +89,7 @@ const SeleccionServicio: React.FC = () => {
         </NavigationMenu>
 
         {/* Servicios del sector */}
-        <Card className="p-6 bg-[#fffaf5] border border-[#e6dcd4] shadow-xl">
+        <Card className="p-6 bg-[#fffaf5] border border-[#e6dcd4] shadow-xl ">
           <CardHeader>
             <CardTitle className="text-2xl text-[#6e4b3a]">
               Servicios de {sectorActual?.nombre}
@@ -127,7 +127,7 @@ const SeleccionServicio: React.FC = () => {
 
       {/* Menú fijo inferior */}
       {servicios.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#fffaf5] border-t border-[#e6dcd4] px-6 py-4 flex justify-between items-center shadow-lg">
+        <div className="z-50 fixed bottom-0 left-0 right-0 bg-[#fffaf5] border-t border-[#e6dcd4] px-6 py-4 flex justify-between items-center shadow-lg">
           <span className="text-[#6e4b3a]">
             {servicios.length} servicios seleccionados • {totalDuracion} min • ${totalPrecio}
           </span>
