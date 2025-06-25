@@ -47,9 +47,9 @@ const AsignarHabilidadesEmpleado: React.FC = () => {
     }, [id]);
 
     const toggleHabilidad = async (habilidadId: number) => {
-        const yaAsignada = habilidadesAsignadas.includes(habilidadId);
+        const yaEstaAsignada = habilidadesAsignadas.includes(habilidadId);
         try {
-            if (yaAsignada) {
+            if (yaEstaAsignada) {
                 await axios.delete(`/api/Empleado/${id}/habilidades/${habilidadId}`);
                 setHabilidadesAsignadas((prev) => prev.filter((id) => id !== habilidadId));
             } else {

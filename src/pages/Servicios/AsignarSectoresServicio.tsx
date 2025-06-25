@@ -1,90 +1,122 @@
-import React, { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
-import axios from "@/api/AxiosInstance"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { toast } from "sonner"
-import { motion } from "framer-motion"
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "@/api/AxiosInstance";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 interface Sector {
-  id: number
-  nombre: string
-  descripcion: string
-  sucursalId: number
+  id: number;
+  nombre: string;
+  descripcion: string;
+  sucursalId: number;
 }
 
 const AsignarSectoresServicio: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
-  const [sectores, setSectores] = useState<Sector[]>([])
-  const [sectoresAsignados, setSectoresAsignados] = useState<number[]>([])
-  const [loading, setLoading] = useState(false)
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectoresAsignados, setSectoresAsignados] = useState<number[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [resTodos, resAsignados] = await Promise.all([
           axios.get<Sector[]>("/api/Sector"),
-          axios.get<Sector[]>(`/api/Servicio/${id}/sectores`)
-        ])
-        setSectores(resTodos.data)
-        setSectoresAsignados(resAsignados.data.map(s => s.id))
+          axios.get<Sector[]>(`/api/Servicio/${id}/sectores`),
+        ]);
+        setSectores(resTodos.data);
+        setSectoresAsignados(resAsignados.data.map(s => s.id));
       } catch (err) {
-        toast.error("Error al cargar sectores")
+        setError("Error al cargar sectores");
       }
-    }
-    fetchData()
-  }, [id])
+    };
+    fetchData();
+  }, [id]);
 
-  const toggleSector = async (sectorId: number, asignado: boolean) => {
-    setLoading(true)
+  const toggleSector = async (sectorId: number) => {
+    const asignado = sectoresAsignados.includes(sectorId);
     try {
       if (asignado) {
-        await axios.delete(`/api/Servicio/${id}/sectores/${sectorId}`)
-        toast.success("Sector quitado")
-        setSectoresAsignados(prev => prev.filter(s => s !== sectorId))
+        await axios.delete(`/api/Servicio/${id}/sectores/${sectorId}`);
+        setSectoresAsignados(prev => prev.filter(s => s !== sectorId));
       } else {
-        await axios.post(`/api/Servicio/${id}/sectores/${sectorId}`)
-        toast.success("Sector asignado")
-        setSectoresAsignados(prev => [...prev, sectorId])
+        await axios.post(`/api/Servicio/${id}/sectores/${sectorId}`);
+        setSectoresAsignados(prev => [...prev, sectorId]);
       }
-    } catch {
-      toast.error("Error al actualizar sector")
-    } finally {
-      setLoading(false)
+    } catch (err) {
+      setError("No se pudo actualizar el sector");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fdf6f1] px-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-2xl">
-        <Card className="bg-[#fffaf5] border border-[#e6dcd4] shadow-md">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-4xl">
+        <Card className="bg-[#fffaf5] border border-[#e0d6cf] shadow-lg">
           <CardHeader>
-            <CardTitle className="text-[#6e4b3a]">Sectores del Servicio</CardTitle>
+            <CardTitle className="text-2xl text-[#6e4b3a]">Asignar Sectores al Servicio</CardTitle>
+            {error && <p className="text-red-500 mt-2">{error}</p>}
           </CardHeader>
-          <CardContent className="space-y-4">
-            {sectores.map((s) => {
-              const asignado = sectoresAsignados.includes(s.id)
-              return (
-                <div key={s.id} className="flex items-center gap-4">
-                  <Checkbox
-                    checked={asignado}
-                    onCheckedChange={() => toggleSector(s.id, asignado)}
-                    disabled={loading}
-                    id={`sec-${s.id}`}
-                  />
-                  <Label htmlFor={`sec-${s.id}`} className="text-[#4e342e]">
-                    {s.nombre} — <span className="text-sm text-muted-foreground">{s.descripcion}</span>
-                  </Label>
-                </div>
-              )
-            })}
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#f3e5e1]">
+                    <TableHead>Sector</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Asignado</TableHead>
+                    <TableHead>Acción</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sectores.map((sector) => {
+                    const asignado = sectoresAsignados.includes(sector.id);
+                    return (
+                      <TableRow key={sector.id}>
+                        <TableCell>{sector.nombre}</TableCell>
+                        <TableCell>{sector.descripcion}</TableCell>
+                        <TableCell>{asignado ? "Sí" : "No"}</TableCell>
+                        <TableCell>
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button
+                              size="sm"
+                              onClick={() => toggleSector(sector.id)}
+                              className={asignado ? "bg-red-500 hover:bg-red-600 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+                            >
+                              {asignado ? "Quitar" : "Asignar"}
+                            </Button>
+                          </motion.div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-4">
+              <Button onClick={() => navigate("/servicios")} className="bg-[#6d4c41] text-white hover:bg-[#5d4037]">
+                Volver a lista
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default AsignarSectoresServicio
+export default AsignarSectoresServicio;
