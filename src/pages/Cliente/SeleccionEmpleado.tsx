@@ -6,43 +6,42 @@ import { motion } from "framer-motion";
 import axios from "@/api/AxiosInstance";
 import { useTurno } from "@/context/TurnoContext";
 
-interface Empleado {
+interface EmpleadaDisponible {
   id: number;
-  nombre: string;
-  apellido: string;
+  nombreCompleto: string;
+  serviciosQuePuedeRealizar: number[];
 }
 
 const SeleccionEmpleado: React.FC = () => {
   const navigate = useNavigate();
-  const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [empleadas, setEmpleadas] = useState<EmpleadaDisponible[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { sucursal, detalles, fechaHora, setEmpleado } = useTurno(); // usamos detalles ahora
+  const { detalles, fechaHora, setEmpleado } = useTurno();
 
   useEffect(() => {
-    if (!sucursal || detalles.length === 0 || !fechaHora) {
-      navigate("/"); // Validación
+    if (!fechaHora || detalles.length === 0) {
+      navigate("/");
       return;
     }
 
-    // Tomamos el primer servicioId de los detalles
-    const servicioId = detalles[0].servicio.id;
+    const serviciosSeleccionados = detalles.map(d => d.servicio.id);
 
-    axios
-      .get(`/api/Empleado`, {
-        params: {
-          sucursalId: sucursal.id,
-          servicioId,
-          fechaHora,
-        },
-      })
-      .then((res) => setEmpleados(res.data))
-      .catch((err) => console.error("Error cargando empleados", err))
-      .finally(() => setLoading(false));
+    axios.post<EmpleadaDisponible[]>("/api/Empleado/disponibles", {
+      fechaHoraInicio: fechaHora,
+      serviciosSeleccionados,
+    })
+    .then((res) => setEmpleadas(res.data))
+    .catch((err) => console.error("Error cargando empleadas disponibles", err))
+    .finally(() => setLoading(false));
   }, []);
 
-  const handleSeleccion = (emp: Empleado) => {
-    setEmpleado(emp); // Guardar en contexto
+  const handleSeleccion = (emp: EmpleadaDisponible) => {
+    setEmpleado({
+      id: emp.id,
+      nombre: emp.nombreCompleto.split(" ")[0],
+      apellido: emp.nombreCompleto.split(" ").slice(1).join(" "),
+    });
     navigate("/reserva/confirmar");
   };
 
@@ -60,13 +59,13 @@ const SeleccionEmpleado: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
-              <p>Cargando empleados...</p>
-            ) : empleados.length === 0 ? (
+              <p>Cargando empleadas...</p>
+            ) : empleadas.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No hay empleados disponibles en ese horario.
+                No hay empleadas disponibles en ese horario.
               </p>
             ) : (
-              empleados.map((emp) => (
+              empleadas.map((emp) => (
                 <motion.div
                   key={emp.id}
                   whileHover={{ scale: 1.02 }}
@@ -76,7 +75,7 @@ const SeleccionEmpleado: React.FC = () => {
                     className="btn-jmbrows w-full justify-start"
                     onClick={() => handleSeleccion(emp)}
                   >
-                    {emp.nombre} {emp.apellido}
+                    {emp.nombreCompleto}
                   </Button>
                 </motion.div>
               ))
@@ -89,4 +88,3 @@ const SeleccionEmpleado: React.FC = () => {
 };
 
 export default SeleccionEmpleado;
-
