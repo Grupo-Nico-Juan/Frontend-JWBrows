@@ -12,13 +12,14 @@ import { motion } from "framer-motion"
 
 interface PeriodoLaboral {
   id: number
-  desde?: string
-  hasta?: string
-  motivo?: string
-  esLicencia: boolean
+  empleadaId: number
+  tipo: "HorarioHabitual" | "Licencia"
   diaSemana?: string
   horaInicio?: string
   horaFin?: string
+  desde?: string
+  hasta?: string
+  motivo?: string
 }
 
 const PeriodosLaboralesList: React.FC = () => {
@@ -41,14 +42,14 @@ const PeriodosLaboralesList: React.FC = () => {
     if (!window.confirm("¿Eliminar este periodo laboral?")) return
     try {
       await axios.delete(`/api/PeriodoLaboral/${id}`)
-      setPeriodos(periodos.filter(p => p.id !== id))
+      setPeriodos(prev => prev.filter(p => p.id !== id))
     } catch {
       setError("No se pudo eliminar el periodo laboral")
     }
   }
 
-  const horarios = periodos.filter(p => !p.esLicencia)
-  const licencias = periodos.filter(p => p.esLicencia)
+  const horarios = periodos.filter(p => p.tipo === "HorarioHabitual")
+  const licencias = periodos.filter(p => p.tipo === "Licencia")
 
   return (
     <div className="min-h-screen flex justify-center bg-[#fdf6f1] px-4 py-10">
@@ -63,10 +64,14 @@ const PeriodosLaboralesList: React.FC = () => {
             <CardTitle className="text-2xl text-[#6d4c41]">
               Periodos Laborales
             </CardTitle>
-            <div className="mt-2">
-              <motion.div className="inline-block origin-left"
+
+            {/* Botón volver */}
+            <div className="mt-2 flex gap-3 flex-wrap">
+              <motion.div
+                className="inline-block origin-left"
                 whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}>
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
                   onClick={() => navigate(`/periodos-laborales/nuevo?empleadaId=${empleadaId}`)}
@@ -74,9 +79,24 @@ const PeriodosLaboralesList: React.FC = () => {
                   + Nuevo Periodo
                 </Button>
               </motion.div>
+
+              <motion.div
+                className="inline-block origin-left"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/empleados")}
+                >
+                  ← Volver a empleados
+                </Button>
+              </motion.div>
             </div>
+
             {error && <p className="text-red-500 mt-2">{error}</p>}
           </CardHeader>
+
           <CardContent className="space-y-10">
             {/* Horarios Habituales */}
             <section>

@@ -128,6 +128,15 @@ const EmpleadosList: React.FC = () => {
                             Sectores
                           </Button>
                         </motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            className="bg-[#6d4c41] text-white hover:bg-[#5d4037]"
+                            onClick={() => navigate(`/periodos-laborales?empleadaId=${emp.id}`)}
+                          >
+                            Periodos
+                          </Button>
+                        </motion.div>
                       </TableCell>
                     </TableRow>
                   ))}
