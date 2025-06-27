@@ -29,6 +29,7 @@ import AsignarHabilidadesServicio from './pages/Servicios/AsignarHabilidadesServ
 import AsignarSectoresServicio from './pages/Servicios/AsignarSectoresServicio';
 import ElegirVistaEmpleado from './pages/Empleado/ElegirVistaEmpleado';
 import VistaEmpleado from './pages/Empleado/VistaEmpleado';
+import AsignarExtrasServicio from './pages/Servicios/AsignarExtrasServicio';
 
 function App() {
 
@@ -53,6 +54,7 @@ function App() {
         <Route path="/servicios/editar/:id" element={<ServicioForm />} />
         <Route path="/servicios/:id/habilidades" element={<AsignarHabilidadesServicio />} />
         <Route path="/servicios/:id/sectores" element={<AsignarSectoresServicio />} />
+        <Route path="/servicios/:id/extras" element={<AsignarExtrasServicio />} />
         <Route path="/sucursales" element={<SucursalesList />} />
         <Route path="/sucursales/nueva" element={<SucursalForm />} />
         <Route path="/sucursales/editar/:id" element={<SucursalForm />} />

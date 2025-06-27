@@ -14,6 +14,20 @@ import {
 import { motion } from "framer-motion";
 import { CheckboxCard } from "@/components/ui/checkbox-card";
 import ScrollFadeWrapper from "@/components/ui/ScrollFadeWrapper";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/pages/Servicios/ExtraServicio";
+
+interface Extra {
+  id: number;
+  nombre: string;
+  duracionMinutos: number;
+  precio: number;
+}
 
 interface Servicio {
   id: number;
@@ -21,6 +35,7 @@ interface Servicio {
   descripcion?: string;
   duracionMinutos: number;
   precio: number;
+  extras?: Extra[];
 }
 
 interface Sector {
@@ -35,8 +50,10 @@ const SeleccionServicio: React.FC = () => {
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [sectorActivo, setSectorActivo] = useState<number | null>(null);
+  const [servicioExtras, setServicioExtras] = useState<Servicio | null>(null);
+  const [extrasSeleccionados, setExtrasSeleccionados] = useState<Extra[]>([]);
   const navigate = useNavigate();
-  const { agregarDetalle, quitarDetalle, sucursal, servicios } = useTurno();
+  const { agregarDetalle, agregarDetalles, quitarDetalle, sucursal, servicios } = useTurno();
 
   useEffect(() => {
     if (!sucursal) return;
@@ -53,9 +70,29 @@ const SeleccionServicio: React.FC = () => {
   const toggleServicio = (servicio: Servicio, seleccionado: boolean) => {
     if (seleccionado) {
       quitarDetalle(servicio.id);
+      servicio.extras?.forEach((e) => quitarDetalle(e.id));
     } else {
       agregarDetalle(servicio);
+      if (servicio.extras && servicio.extras.length > 0) {
+        setServicioExtras(servicio);
+        setExtrasSeleccionados([]);
+      }
     }
+  };
+
+  const toggleExtra = (extra: Extra, seleccionado: boolean) => {
+    if (seleccionado) {
+      setExtrasSeleccionados((prev) => prev.filter((e) => e.id !== extra.id));
+    } else {
+      setExtrasSeleccionados((prev) => [...prev, extra]);
+    }
+  };
+
+  const confirmarExtras = () => {
+    if (extrasSeleccionados.length > 0) {
+      agregarDetalles(extrasSeleccionados);
+    }
+    setServicioExtras(null);
   };
 
   const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0);
@@ -72,18 +109,21 @@ const SeleccionServicio: React.FC = () => {
       >
         {/* Navegación de sectores */}
         <NavigationMenu className="relative mb-6">
-           <div className="max-w-screen-lg mx-auto">
-          <ScrollFadeWrapper>
-            <NavigationMenuList className="flex overflow-x-auto px-8 py-2 space-x-2 ">
-              {sectores.map((sector) => (
-                <NavigationMenuItem key={sector.id}>
-                  <NavigationMenuLink onClick={() => setSectorActivo(sector.id)}
-                    className={`min-w-[120px] cursor-pointer px-4 py-2 rounded-md transition whitespace-nowrap ${sectorActivo === sector.id ? "bg-[#e7ddd3]" : ""}`} >
-                    {sector.nombre}
-                  </NavigationMenuLink>
-                </NavigationMenuItem>))}
-            </NavigationMenuList>
-          </ScrollFadeWrapper>
+          <div className="max-w-screen-lg mx-auto">
+            <ScrollFadeWrapper>
+              <NavigationMenuList className="flex overflow-x-auto px-8 py-2 space-x-2 ">
+                {sectores.map((sector) => (
+                  <NavigationMenuItem key={sector.id}>
+                    <NavigationMenuLink
+                      onClick={() => setSectorActivo(sector.id)}
+                      className={`cursor-pointer px-4 py-2 rounded-md transition whitespace-nowrap ${sectorActivo === sector.id ? "bg-[#e7ddd3]" : ""}`}
+                    >
+                      {sector.nombre}
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </ScrollFadeWrapper>
           </div>
         </NavigationMenu>
 
@@ -138,6 +178,36 @@ const SeleccionServicio: React.FC = () => {
             Continuar
           </Button>
         </div>
+      )}
+
+      {servicioExtras && (
+        <Dialog open onOpenChange={(open) => !open && setServicioExtras(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Extras para {servicioExtras.nombre}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-2 py-2">
+              {servicioExtras.extras?.map((extra) => {
+                const seleccionado = extrasSeleccionados.some((e) => e.id === extra.id);
+                return (
+                  <CheckboxCard
+                    key={extra.id}
+                    label={extra.nombre}
+                    description={`${extra.duracionMinutos} min - $${extra.precio}`}
+                    checked={seleccionado}
+                    onCheckedChange={() => toggleExtra(extra, seleccionado)}
+                  />
+                );
+              })}
+            </div>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setServicioExtras(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarExtras}>Aceptar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

@@ -20,10 +20,14 @@ interface Servicio {
   duracionMinutos: number
   precio: number
 }
+interface Extra {
+  id: number
+}
 
 const ServiciosList: React.FC = () => {
   const navigate = useNavigate()
   const [servicios, setServicios] = useState<Servicio[]>([])
+  const [extrasCount, setExtrasCount] = useState<Record<number, number>>({})
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
@@ -37,6 +41,28 @@ const ServiciosList: React.FC = () => {
     }
     fetchServicios()
   }, [])
+  useEffect(() => {
+    if (servicios.length === 0) return
+    const fetchCounts = async () => {
+      try {
+        const countsArr = await Promise.all(
+          servicios.map(async (s) => {
+            const res = await axios.get<Extra[]>(`/api/Servicio/${s.id}/extras`)
+            return [s.id, res.data.length] as const
+          })
+        )
+        const counts: Record<number, number> = {}
+        countsArr.forEach(([id, count]) => {
+          counts[id] = count
+        })
+        setExtrasCount(counts)
+      } catch {
+        // ignore
+      }
+    }
+    fetchCounts()
+  }, [servicios])
+
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("¿Eliminar este servicio?")) return
@@ -128,6 +154,15 @@ const ServiciosList: React.FC = () => {
                             onClick={() => navigate(`/servicios/${servicio.id}/sectores`)}
                           >
                             Sectores
+                          </Button>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            size="sm"
+                            className="bg-[#a17455] text-white hover:bg-[#8b5f45]"
+                            onClick={() => navigate(`/servicios/${servicio.id}/extras`)}
+                          >
+                            {`Extras (${extrasCount[servicio.id] ?? 0})`}
                           </Button>
                         </motion.div>
                       </TableCell>
