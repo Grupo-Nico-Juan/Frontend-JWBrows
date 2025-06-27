@@ -27,6 +27,8 @@ import AsignarHabilidadesEmpleado from './pages/Empleado/AsignarHabilidadesEmple
 import AsignarSectoresEmpleado from './pages/Empleado/AsignarSectoresEmpleado';
 import AsignarHabilidadesServicio from './pages/Servicios/AsignarHabilidadesServicio';
 import AsignarSectoresServicio from './pages/Servicios/AsignarSectoresServicio';
+import ElegirVistaEmpleado from './pages/Empleado/ElegirVistaEmpleado';
+import VistaEmpleado from './pages/Empleado/VistaEmpleado';
 
 function App() {
 
@@ -68,6 +70,8 @@ function App() {
         <Route path="/reserva/fecha-hora" element={<SeleccionFechaHora />} />
         <Route path="/reserva/empleado" element={<SeleccionEmpleado />} />
         <Route path="/reserva/confirmar" element={<ConfirmacionTurno />} />
+        <Route path="/elegir-empleada" element={<ElegirVistaEmpleado />} />
+        <Route path="/vista-empleado/:empleadaId" element={<VistaEmpleado />} />
       </Routes>
     </MainLayout>
 

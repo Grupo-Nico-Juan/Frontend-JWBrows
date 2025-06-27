@@ -78,7 +78,7 @@ const SeleccionServicio: React.FC = () => {
               {sectores.map((sector) => (
                 <NavigationMenuItem key={sector.id}>
                   <NavigationMenuLink onClick={() => setSectorActivo(sector.id)}
-                    className={`cursor-pointer px-4 py-2 rounded-md transition whitespace-nowrap ${sectorActivo === sector.id ? "bg-[#e7ddd3]" : ""}`} >
+                    className={`min-w-[120px] cursor-pointer px-4 py-2 rounded-md transition whitespace-nowrap ${sectorActivo === sector.id ? "bg-[#e7ddd3]" : ""}`} >
                     {sector.nombre}
                   </NavigationMenuLink>
                 </NavigationMenuItem>))}
