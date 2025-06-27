@@ -131,7 +131,7 @@ const EmpleadosList: React.FC = () => {
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                           <Button
                             size="sm"
-                            className="bg-[#6d4c41] text-white hover:bg-[#5d4037]"
+                            className="btn-jmbrows"
                             onClick={() => navigate(`/periodos-laborales?empleadaId=${emp.id}`)}
                           >
                             Periodos

@@ -133,7 +133,7 @@ const SeleccionServicio: React.FC = () => {
           </span>
           <Button
             onClick={() => navigate("/reserva/fecha-hora")}
-            className="bg-[#6e4b3a] hover:bg-[#5a3d2d] text-white"
+            className="btn-jmbrows"
           >
             Continuar
           </Button>
