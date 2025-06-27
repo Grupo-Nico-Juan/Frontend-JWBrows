@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { motion } from "framer-motion";
 import { CheckboxCard } from "@/components/ui/checkbox-card";
+import ScrollFadeWrapper from "@/components/ui/ScrollFadeWrapper";
 
 interface Servicio {
   id: number;
@@ -70,22 +71,20 @@ const SeleccionServicio: React.FC = () => {
         className="w-full max-w-6xl mx-auto pb-16"
       >
         {/* Navegación de sectores */}
-        <NavigationMenu className="mb-6 justify-center">
-          <NavigationMenuList>
-            {sectores.map((sector) => (
-              <NavigationMenuItem key={sector.id}>
-                <NavigationMenuLink
-                  active={sectorActivo === sector.id}
-                  onClick={() => setSectorActivo(sector.id)}
-                  className={`cursor-pointer px-4 py-2 rounded-md transition ${
-                    sectorActivo === sector.id ? "bg-[#e7ddd3]" : ""
-                  }`}
-                >
-                  {sector.nombre}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
+        <NavigationMenu className="relative mb-6">
+           <div className="max-w-screen-lg mx-auto">
+          <ScrollFadeWrapper>
+            <NavigationMenuList className="flex overflow-x-auto px-8 py-2 space-x-2 ">
+              {sectores.map((sector) => (
+                <NavigationMenuItem key={sector.id}>
+                  <NavigationMenuLink onClick={() => setSectorActivo(sector.id)}
+                    className={`cursor-pointer px-4 py-2 rounded-md transition whitespace-nowrap ${sectorActivo === sector.id ? "bg-[#e7ddd3]" : ""}`} >
+                    {sector.nombre}
+                  </NavigationMenuLink>
+                </NavigationMenuItem>))}
+            </NavigationMenuList>
+          </ScrollFadeWrapper>
+          </div>
         </NavigationMenu>
 
         {/* Servicios del sector */}
@@ -116,6 +115,7 @@ const SeleccionServicio: React.FC = () => {
                           className="h-32 w-full object-cover rounded"
                         />
                       }
+                      className="w-auto"
                     />
                   );
                 })}
