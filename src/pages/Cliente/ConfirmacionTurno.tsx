@@ -60,6 +60,13 @@ const ConfirmarTurnoCliente: React.FC = () => {
         }))
       };
 
+      const payload = {
+        servicios: detalles.map((d) => ({
+          id: d.servicio.id,
+          extras: d.extras.map((e) => ({ id: e.id }))
+        }))
+      };
+
       console.log("📤 Body del POST /api/Turnos:", body);
 
       const fecha = new Date(fechaHora);

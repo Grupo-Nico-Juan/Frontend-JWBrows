@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/pages/Servicios/ExtraServicio";
 
 interface Extra {
@@ -186,6 +187,9 @@ const SeleccionServicio: React.FC = () => {
             <DialogHeader>
               <DialogTitle>Extras para {servicioExtras.nombre}</DialogTitle>
             </DialogHeader>
+            <DialogDescription>
+              Seleccioná los extras que desees agregar a este servicio.
+            </DialogDescription>
             <div className="grid gap-2 py-2">
               {servicioExtras.extras?.map((extra) => {
                 const seleccionado = extrasSeleccionados.some((e) => e.id === extra.id);

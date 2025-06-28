@@ -7,16 +7,25 @@ interface Sucursal {
   direccion: string;
 }
 
+interface Extra {
+  id: number;
+  nombre: string;
+  duracionMinutos: number;
+  precio: number;
+}
+
 interface Servicio {
   id: number;
   nombre: string;
   descripcion?: string;
   duracionMinutos: number;
   precio: number;
+  extras?: Extra[]; // <-- agrega esto
 }
 
 interface DetalleTurno {
   servicio: Servicio;
+  extras: Extra[]; // <-- agrega esto
 }
 
 interface Empleado {
@@ -67,7 +76,27 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setDetalles((prev) =>
       prev.find((d) => d.servicio.id === servicio.id)
         ? prev
-        : [...prev, { servicio }]
+        : [...prev, { servicio, extras: [] }]
+    );
+  };
+
+  const agregarExtra = (servicioId: number, extra: Extra) => {
+    setDetalles((prev) =>
+      prev.map((d) =>
+        d.servicio.id === servicioId
+          ? { ...d, extras: [...d.extras, extra] }
+          : d
+      )
+    );
+  };
+
+  const quitarExtra = (servicioId: number, extraId: number) => {
+    setDetalles((prev) =>
+      prev.map((d) =>
+        d.servicio.id === servicioId
+          ? { ...d, extras: d.extras.filter((e) => e.id !== extraId) }
+          : d
+      )
     );
   };
 
@@ -75,7 +104,7 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setDetalles((prev) => {
       const nuevosDetalles = servicios
         .filter((s) => !prev.find((d) => d.servicio.id === s.id))
-        .map((s) => ({ servicio: s }));
+        .map((s) => ({ servicio: s, extras: [] }));
       return [...prev, ...nuevosDetalles];
     });
   };
