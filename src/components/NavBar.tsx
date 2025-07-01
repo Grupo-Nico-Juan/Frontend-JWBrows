@@ -3,6 +3,7 @@ import {
   IconUserPlus,
   IconCalendarCheck,
   IconLogout,
+  IconGauge,
 } from "@tabler/icons-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
@@ -57,7 +58,7 @@ export const NavBar: React.FC = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-               <SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   className="hover:bg-[#f4e9e1] transition-colors rounded-md"
@@ -101,7 +102,7 @@ export const NavBar: React.FC = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-               <SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   className="hover:bg-[#f4e9e1] transition-colors rounded-md"
@@ -120,6 +121,17 @@ export const NavBar: React.FC = () => {
                   <Link to="/asignarTurno" className="flex items-center gap-2 px-2 py-2">
                     <IconCalendarCheck className="h-5 w-5" />
                     Gestión Turnos
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="hover:bg-[#f4e9e1] transition-colors rounded-md"
+                >
+                  <Link to="/dashboard" className="flex items-center gap-2 px-2 py-2">
+                    <IconGauge className="h-5 w-5" />
+                    Dashboard
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

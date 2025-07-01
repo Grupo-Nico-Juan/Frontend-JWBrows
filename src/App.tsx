@@ -30,6 +30,7 @@ import AsignarSectoresServicio from './pages/Servicios/AsignarSectoresServicio';
 import ElegirVistaEmpleado from './pages/Empleado/ElegirVistaEmpleado';
 import VistaEmpleado from './pages/Empleado/VistaEmpleado';
 import AsignarExtrasServicio from './pages/Servicios/AsignarExtrasServicio';
+import Dashboard from './pages/Dashboard/DashboardMetrica';
 
 function App() {
 
@@ -74,6 +75,7 @@ function App() {
         <Route path="/reserva/confirmar" element={<ConfirmacionTurno />} />
         <Route path="/elegir-empleada" element={<ElegirVistaEmpleado />} />
         <Route path="/vista-empleado/:empleadaId" element={<VistaEmpleado />} />
+        <Route path="/dashboard" element={<Dashboard/>} />
       </Routes>
     </MainLayout>
 
