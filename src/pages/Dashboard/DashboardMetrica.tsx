@@ -9,16 +9,14 @@ import IngresosSucursalPorCategoria from "./Componentes/IngresosSucursalPorCateg
 import CitasConfirmadasCanceladas from "./Componentes/CitasConfirmadasCanceladas"
 import CitasPorServicio from "./Componentes/CitasPorServicio"
 import HorarioConMasCitas from "./Componentes/HorarioConMaxCitas"
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 
 const Dashboard: React.FC = () => {
   const [anio, setAnio] = useState<number>(new Date().getFullYear())
   const [mes, setMes] = useState<number>(new Date().getMonth() + 1)
-
-  const handleFechaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [anioStr, mesStr] = e.target.value.split("-")
-    setAnio(Number.parseInt(anioStr))
-    setMes(Number.parseInt(mesStr))
-  }
 
   const fechaFormateada = new Date(anio, mes - 1).toLocaleDateString("es-ES", {
     month: "long",
@@ -73,15 +71,108 @@ const Dashboard: React.FC = () => {
             <Card className="bg-[#fdf6f1] border-[#e0d6cf] lg:w-auto">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-[#a1887f]" />
+                  <CalendarIcon className="h-5 w-5 text-[#a1887f]" />
                   <div>
                     <label className="block text-sm font-medium text-[#6d4c41] mb-1">Período de análisis</label>
-                    <input
-                      type="month"
-                      value={`${anio}-${mes.toString().padStart(2, "0")}`}
-                      onChange={handleFechaChange}
-                      className="border border-[#d2bfae] rounded-lg px-3 py-2 text-[#6d4c41] bg-white focus:outline-none focus:ring-2 focus:ring-[#a1887f] focus:border-transparent transition-all"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[200px] justify-start text-left font-normal border-[#d2bfae] text-[#6d4c41] bg-white hover:bg-[#f8f0ec] focus:ring-2 focus:ring-[#a1887f] focus:border-transparent"
+                        >
+                          
+                          {fechaFormateada}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0 bg-white border-[#e0d6cf]" align="start">
+                        <div className="p-4 space-y-4">
+                          
+
+                          {/* Selectores */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-[#8d6e63] mb-2">Mes</label>
+                              <Select value={mes.toString()} onValueChange={(value) => setMes(Number.parseInt(value))}>
+                                <SelectTrigger className="border-[#d2bfae] focus:ring-[#a1887f]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {[
+                                    "Enero",
+                                    "Febrero",
+                                    "Marzo",
+                                    "Abril",
+                                    "Mayo",
+                                    "Junio",
+                                    "Julio",
+                                    "Agosto",
+                                    "Septiembre",
+                                    "Octubre",
+                                    "Noviembre",
+                                    "Diciembre",
+                                  ].map((nombreMes, index) => (
+                                    <SelectItem key={index + 1} value={(index + 1).toString()}>
+                                      {nombreMes}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-[#8d6e63] mb-2">Año</label>
+                              <Select
+                                value={anio.toString()}
+                                onValueChange={(value) => setAnio(Number.parseInt(value))}
+                              >
+                                <SelectTrigger className="border-[#d2bfae] focus:ring-[#a1887f]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map(
+                                    (year) => (
+                                      <SelectItem key={year} value={year.toString()}>
+                                        {year}
+                                      </SelectItem>
+                                    ),
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          {/* Botones de acción rápida */}
+                          <div className="flex gap-2 pt-2 border-t border-[#e0d6cf]">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const now = new Date()
+                                setAnio(now.getFullYear())
+                                setMes(now.getMonth() + 1)
+                              }}
+                              className="flex-1 text-xs border-[#d2bfae] hover:bg-[#f8f0ec]"
+                            >
+                              Mes actual
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const now = new Date()
+                                const lastMonth = now.getMonth() === 0 ? 12 : now.getMonth()
+                                const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
+                                setAnio(lastMonthYear)
+                                setMes(lastMonth)
+                              }}
+                              className="flex-1 text-xs border-[#d2bfae] hover:bg-[#f8f0ec]"
+                            >
+                              Mes anterior
+                            </Button>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </CardContent>
@@ -188,6 +279,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
       </div>
     </div>
   )
