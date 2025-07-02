@@ -76,6 +76,12 @@ export const NavBar: React.FC = () => {
         icon: IconCalendarCheck,
         description: "Programación de citas",
       },
+      {
+        title: "Turnos Diarios",
+        path: "/empleadas",
+        icon: IconCalendarCheck,
+        description: "Turnos Diarios por empleada",
+      },
     ],
     configuracion: [
       {
