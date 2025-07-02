@@ -94,7 +94,7 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    
   }
 }
 
@@ -180,7 +180,7 @@ button:focus-visible {
 }
 
 html, body, #root {
-  height: 100%;
+  min-height: 100%;
   background-color: #fdf6f1; /* fondo beishe */
 }
 
@@ -191,3 +191,12 @@ html, body, #root {
 .btn-beish {
     @apply bg-[#f2e4d9] text-[#6e4b3a] hover:bg-[#e6d4c4] transition-colors duration-200;
 }
+/*
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; 
+}
+*/

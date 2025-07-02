@@ -113,7 +113,7 @@ const Login: React.FC = () => {
                 type="submit"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ scale: 1.02 }}
-                className="w-full bg-[#a37e63] hover:bg-[#8b6652] text-white font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 transition-colors duration-200"
+                className="w-full btn-jmbrows font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 transition-colors duration-200"
               >
                 <LogIn size={18} className="stroke-white" />
                 <span>Ingresar</span>
