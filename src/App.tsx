@@ -31,6 +31,9 @@ import ElegirVistaEmpleado from './pages/Empleado/ElegirVistaEmpleado';
 import VistaEmpleado from './pages/Empleado/VistaEmpleado';
 import AsignarExtrasServicio from './pages/Servicios/AsignarExtrasServicio';
 import Dashboard from './pages/Dashboard/DashboardMetrica';
+import SeleccionTipoReserva from './pages/Cliente/SeleccionTipoReserva';
+import SeleccionEmpleadaPrimero from './pages/Cliente/SeleccionEmpleadaPrimero';
+import SeleccionFechaHoraEmpleada from './pages/Cliente/seleccionFechaYHoraEmpleada';
 
 function App() {
 
@@ -73,6 +76,9 @@ function App() {
         <Route path="/reserva/fecha-hora" element={<SeleccionFechaHora />} />
         <Route path="/reserva/empleado" element={<SeleccionEmpleado />} />
         <Route path="/reserva/confirmar" element={<ConfirmacionTurno />} />
+        <Route path="/reserva/tipo" element={<SeleccionTipoReserva/>} />
+        <Route path="/reserva/empleada-primero" element={<SeleccionEmpleadaPrimero/>} />
+        <Route path="/reserva/fecha-hora-empleada" element={<SeleccionFechaHoraEmpleada />} />
         <Route path="/elegir-empleada" element={<ElegirVistaEmpleado />} />
         <Route path="/vista-empleado/:empleadaId" element={<VistaEmpleado />} />
         <Route path="/dashboard" element={<Dashboard/>} />

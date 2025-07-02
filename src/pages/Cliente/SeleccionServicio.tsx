@@ -375,7 +375,7 @@ const SeleccionServicio: React.FC = () => {
                 </div>
 
                 <Button
-                  onClick={() => navigate("/reserva/fecha-hora")}
+                  onClick={() => navigate("/reserva/tipo")}
                   className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
                 >
                   Continuar
