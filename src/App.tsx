@@ -34,6 +34,8 @@ import Dashboard from './pages/Dashboard/DashboardMetrica';
 import SeleccionTipoReserva from './pages/Cliente/SeleccionTipoReserva';
 import SeleccionEmpleadaPrimero from './pages/Cliente/SeleccionEmpleadaPrimero';
 import SeleccionFechaHoraEmpleada from './pages/Cliente/seleccionFechaYHoraEmpleada';
+import TurnosEmpleadasSector from './pages/Empleado/TurnosEmpleadasSector';
+import SeleccionSucursalSector from './pages/Empleado/SeleccionSucursalSector';
 
 function App() {
 
@@ -82,6 +84,8 @@ function App() {
         <Route path="/elegir-empleada" element={<ElegirVistaEmpleado />} />
         <Route path="/vista-empleado/:empleadaId" element={<VistaEmpleado />} />
         <Route path="/dashboard" element={<Dashboard/>} />
+        <Route path="/empleadas" element={<SeleccionSucursalSector />} />
+        <Route path="/empleadas/turnos" element={<TurnosEmpleadasSector/>} />
       </Routes>
     </MainLayout>
 
