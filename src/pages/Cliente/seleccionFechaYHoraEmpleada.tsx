@@ -41,7 +41,7 @@ interface HorarioDisponible {
 
 const SeleccionFechaHoraEmpleada: React.FC = () => {
   const navigate = useNavigate()
-  const { setFechaHora, sucursal, servicios, empleado } = useTurno()
+  const { setFechaHora, sucursal, servicios, detalles, empleado } = useTurno()
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("")
   const [semanaActual, setSemanaActual] = useState(0)
@@ -85,7 +85,7 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
       setLoadingHorarios(true)
       try {
         const fechaStr = fechaSeleccionada.toISOString().split("T")[0]
-        const serviciosIds = servicios.map((s) => s.id)
+         const serviciosIds = detalles.map((d) => d.servicio.id)
 
         const response = await axios.post<HorarioDisponible[]>("/api/Turnos/horarios-disponibles-empleada", {
           empleadaId: empleado.id,
@@ -135,8 +135,19 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
   }
 
   const diasSemana = generarDiasSemana(semanaActual)
-  const totalDuracion = servicios.reduce((sum, s) => sum + s.duracionMinutos, 0)
-  const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0)
+  const totalDuracion = detalles.reduce(
+    (sum, d) =>
+      sum +
+      d.servicio.duracionMinutos +
+      d.extras.reduce((eSum, e) => eSum + e.duracionMinutos, 0),
+    0,
+  )
+  const totalPrecio = detalles.reduce(
+    (sum, d) =>
+      sum + d.servicio.precio + d.extras.reduce((eSum, e) => eSum + e.precio, 0),
+    0,
+  )
+
 
   const handleSeleccionFecha = (fecha: Date) => {
     setFechaSeleccionada(fecha)

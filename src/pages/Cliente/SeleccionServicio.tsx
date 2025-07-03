@@ -60,7 +60,7 @@ const SeleccionServicio: React.FC = () => {
   const [servicioExtras, setServicioExtras] = useState<Servicio | null>(null)
   const [extrasSeleccionados, setExtrasSeleccionados] = useState<Extra[]>([])
   const navigate = useNavigate()
-  const { agregarDetalle, agregarDetalles, quitarDetalle, sucursal, servicios } = useTurno()
+  const { agregarDetalle, agregarExtra, quitarDetalle, sucursal, servicios, detalles } = useTurno()
 
   useEffect(() => {
     if (!sucursal) {
@@ -112,15 +112,29 @@ const SeleccionServicio: React.FC = () => {
   }
 
   const confirmarExtras = () => {
-    if (extrasSeleccionados.length > 0) {
-      agregarDetalles(extrasSeleccionados)
+     if (servicioExtras) {
+      extrasSeleccionados.forEach((extra) => {
+        agregarExtra(servicioExtras.id, extra)
+      })
     }
     setServicioExtras(null)
     setExtrasSeleccionados([])
   }
 
-  const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0)
-  const totalDuracion = servicios.reduce((sum, s) => sum + s.duracionMinutos, 0)
+  const totalPrecio = detalles.reduce(
+    (sum, d) =>
+      sum +
+      d.servicio.precio +
+      d.extras.reduce((eSum, e) => eSum + e.precio, 0),
+    0,
+  )
+  const totalDuracion = detalles.reduce(
+    (sum, d) =>
+      sum +
+      d.servicio.duracionMinutos +
+      d.extras.reduce((eSum, e) => eSum + e.duracionMinutos, 0),
+    0,
+  )
 
   if (loading) {
     return (

@@ -46,9 +46,11 @@ interface TurnoContextType {
 
   detalles: DetalleTurno[];
   agregarDetalle: (servicio: Servicio) => void;
+  agregarExtra: (servicioId: number, extra: Extra) => void;
+  quitarExtra: (servicioId: number, extraId: number) => void;
   quitarDetalle: (servicioId: number) => void;
   servicios: Servicio[]; // derivado
-  agregarDetalles: (servicios: Servicio[]) => void; 
+  agregarDetalles: (servicios: Servicio[]) => void;
 
   fechaHora: string;
   setFechaHora: (f: string) => void;
@@ -131,6 +133,8 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         detalles,
         agregarDetalle,
         agregarDetalles,
+        agregarExtra,
+        quitarExtra,
         quitarDetalle,
         servicios,
         fechaHora,

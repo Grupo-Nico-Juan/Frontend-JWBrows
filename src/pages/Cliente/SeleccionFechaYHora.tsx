@@ -56,7 +56,7 @@ function obtenerHorariosOcupados(fecha: Date): string[] {
 
 const SeleccionFechaHora: React.FC = () => {
   const navigate = useNavigate()
-  const { setFechaHora, sucursal, servicios } = useTurno()
+  const { setFechaHora, sucursal, servicios, detalles } = useTurno()
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("")
   const [semanaActual, setSemanaActual] = useState(0)
@@ -99,8 +99,18 @@ const SeleccionFechaHora: React.FC = () => {
   }
 
   const diasSemana = generarDiasSemana(semanaActual)
-  const totalDuracion = servicios.reduce((sum, s) => sum + s.duracionMinutos, 0)
-  const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0)
+  const totalDuracion = detalles.reduce(
+    (sum, d) =>
+      sum +
+      d.servicio.duracionMinutos +
+      d.extras.reduce((eSum, e) => eSum + e.duracionMinutos, 0),
+    0,
+  )
+  const totalPrecio = detalles.reduce(
+    (sum, d) =>
+      sum + d.servicio.precio + d.extras.reduce((eSum, e) => eSum + e.precio, 0),
+    0,
+  )
 
   const handleSeleccionFecha = (fecha: Date) => {
     setFechaSeleccionada(fecha)
@@ -225,8 +235,8 @@ const SeleccionFechaHora: React.FC = () => {
                   const tieneHorarios = dia.horario !== null
                   const horariosDisponibles = dia.horario
                     ? generarFranjas(dia.horario.inicio, dia.horario.fin).filter(
-                        (hora) => !dia.horariosOcupados.includes(hora),
-                      ).length
+                      (hora) => !dia.horariosOcupados.includes(hora),
+                    ).length
                     : 0
 
                   return (
@@ -239,13 +249,12 @@ const SeleccionFechaHora: React.FC = () => {
                       whileTap={{ scale: tieneHorarios ? 0.98 : 1 }}
                     >
                       <Card
-                        className={`cursor-pointer transition-all duration-300 ${
-                          !tieneHorarios
+                        className={`cursor-pointer transition-all duration-300 ${!tieneHorarios
                             ? "opacity-50 cursor-not-allowed bg-gray-50"
                             : esSeleccionado
                               ? "border-2 border-[#a1887f] bg-[#a1887f]/5 shadow-md"
                               : "border border-[#e0d6cf] hover:border-[#d2bfae] hover:shadow-sm"
-                        }`}
+                          }`}
                         onClick={() => tieneHorarios && handleSeleccionFecha(dia.fecha)}
                       >
                         <CardContent className="p-4 text-center">
@@ -323,13 +332,12 @@ const SeleccionFechaHora: React.FC = () => {
                         >
                           <Button
                             variant={esSeleccionado ? "default" : "outline"}
-                            className={`w-full h-12 transition-all duration-300 ${
-                              estaOcupado
+                            className={`w-full h-12 transition-all duration-300 ${estaOcupado
                                 ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
                                 : esSeleccionado
                                   ? "bg-[#a1887f] hover:bg-[#8d6e63] text-white border-[#a1887f]"
                                   : "border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#a1887f]"
-                            }`}
+                              }`}
                             onClick={() => !estaOcupado && handleSeleccionHora(hora)}
                             disabled={estaOcupado}
                           >
