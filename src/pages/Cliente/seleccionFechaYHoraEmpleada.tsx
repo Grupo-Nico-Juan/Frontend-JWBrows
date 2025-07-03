@@ -27,10 +27,14 @@ import {
 interface PeriodoLaboral {
   id: number
   empleadaId: number
-  diaSemana: number // 0 = Domingo, 1 = Lunes, etc.
-  horaInicio: string
-  horaFin: string
-  activo: boolean
+  tipo: "HorarioHabitual" | "Licencia"
+  diaSemana?: string // "Monday", "Tuesday", etc.
+  horaInicio?: string
+  horaFin?: string
+  desde?: string
+  hasta?: string
+  motivo?: string
+
 }
 
 interface HorarioDisponible {
@@ -64,8 +68,12 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
 
       setLoading(true)
       try {
-        const response = await axios.get<PeriodoLaboral[]>(`/api/PeriodoLaboral/empleada/${empleado.id}`)
-        setPeriodosLaborales(response.data.filter((p) => p.activo))
+        const response = await axios.get<PeriodoLaboral[]>(
+          `/api/PeriodoLaboral/empleada/${empleado.id}`,
+        )
+        setPeriodosLaborales(
+          response.data.filter((p) => p.tipo === "HorarioHabitual"),
+        )
       } catch (error) {
         console.error("Error cargando períodos laborales:", error)
         setPeriodosLaborales([])
@@ -85,12 +93,12 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
       setLoadingHorarios(true)
       try {
         const fechaStr = fechaSeleccionada.toISOString().split("T")[0]
-         const serviciosIds = detalles.map((d) => d.servicio.id)
+        const serviciosIds = detalles.map((d) => d.servicio.id)
 
         const response = await axios.post<HorarioDisponible[]>("/api/Turnos/horarios-disponibles-empleada", {
           empleadaId: empleado.id,
           fecha: fechaStr,
-          serviciosIds: serviciosIds,
+          servicioIds: serviciosIds,
           sucursalId: sucursal?.id,
         })
 
@@ -119,8 +127,11 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
 
       // Solo mostrar fechas futuras
       if (fecha >= hoy || fecha.toDateString() === hoy.toDateString()) {
-        const diaSemana = fecha.getDay()
-        const periodoLaboral = periodosLaborales.find((p) => p.diaSemana === diaSemana)
+        const diaSemanaNombre = fecha.toLocaleDateString('en-US', { weekday: 'long' })
+        const periodoLaboral = periodosLaborales.find(
+          (p) =>
+            p.diaSemana?.toLowerCase() === diaSemanaNombre.toLowerCase(),
+        )
 
         dias.push({
           fecha,
@@ -335,13 +346,12 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                       whileTap={{ scale: tieneHorarios ? 0.98 : 1 }}
                     >
                       <Card
-                        className={`cursor-pointer transition-all duration-300 ${
-                          !tieneHorarios
-                            ? "opacity-50 cursor-not-allowed bg-gray-50"
-                            : esSeleccionado
-                              ? "border-2 border-[#8d6e63] bg-[#8d6e63]/5 shadow-md"
-                              : "border border-[#e0d6cf] hover:border-[#d2bfae] hover:shadow-sm"
-                        }`}
+                        className={`cursor-pointer transition-all duration-300 ${!tieneHorarios
+                          ? "opacity-50 cursor-not-allowed bg-gray-50"
+                          : esSeleccionado
+                            ? "border-2 border-[#8d6e63] bg-[#8d6e63]/5 shadow-md"
+                            : "border border-[#e0d6cf] hover:border-[#d2bfae] hover:shadow-sm"
+                          }`}
                         onClick={() => tieneHorarios && handleSeleccionFecha(dia.fecha)}
                       >
                         <CardContent className="p-4 text-center">
@@ -416,12 +426,13 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {horariosDisponibles.map((horario) => {
-                        const esSeleccionado = horaSeleccionada === horario.hora
+                      {horariosDisponibles.map((horario, index) => {
+                        const esSeleccionado = horaSeleccionada === horario.hora;
+                        const key = `${horario.hora}-${index}`;
 
                         return (
                           <motion.div
-                            key={horario.hora}
+                            key={key}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.3 }}
@@ -430,24 +441,26 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                           >
                             <Button
                               variant={esSeleccionado ? "default" : "outline"}
-                              className={`w-full h-12 transition-all duration-300 ${
-                                !horario.disponible
+                              className={`w-full h-12 transition-all duration-300 ${!horario.disponible
                                   ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
                                   : esSeleccionado
                                     ? "bg-[#8d6e63] hover:bg-[#795548] text-white border-[#8d6e63]"
                                     : "border border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#8d6e63]"
-                              }`}
+                                }`}
                               onClick={() => horario.disponible && handleSeleccionHora(horario.hora)}
                               disabled={!horario.disponible}
                             >
                               <div className="flex flex-col items-center">
                                 <span className="font-medium">{horario.hora}</span>
-                                {!horario.disponible && <span className="text-xs opacity-75">Ocupado</span>}
+                                {!horario.disponible && (
+                                  <span className="text-xs opacity-75">Ocupado</span>
+                                )}
                               </div>
                             </Button>
                           </motion.div>
-                        )
+                        );
                       })}
+
                     </div>
                   )}
 
