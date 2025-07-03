@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import axios from "@/api/AxiosInstance"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -32,6 +33,11 @@ const horariosLaborales: Record<string, { inicio: string; fin: string } | null> 
   Sunday: null,
 }
 
+interface HorarioOcupado {
+  fechaHoraInicio: string
+  fechaHoraFin: string
+}
+
 // Función para generar franjas horarias
 function generarFranjas(horaInicio: string, horaFin: string): string[] {
   const franjas: string[] = []
@@ -48,8 +54,9 @@ function generarFranjas(horaInicio: string, horaFin: string): string[] {
   return franjas
 }
 
-// Función para simular horarios ocupados (en producción vendría de la API)
-function obtenerHorariosOcupados(fecha: Date): string[] {
+// Función para simular horarios ocupados para cada día (usado para calcular la
+// cantidad de horarios disponibles en la cuadrícula de fechas)
+function obtenerHorariosOcupadosMock(fecha: Date): string[] {
   const ocupados = ["10:00", "14:30", "16:00"] // Simulación
   return ocupados
 }
@@ -59,6 +66,8 @@ const SeleccionFechaHora: React.FC = () => {
   const { setFechaHora, sucursal, servicios, detalles } = useTurno()
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("")
+  const [horariosOcupadosSeleccionado, setHorariosOcupadosSeleccionado] = useState<string[]>([])
+  const [loadingHorarios, setLoadingHorarios] = useState(false)
   const [semanaActual, setSemanaActual] = useState(0)
 
   // Verificar que tengamos los datos necesarios
@@ -67,6 +76,38 @@ const SeleccionFechaHora: React.FC = () => {
       navigate("/reserva/servicio")
     }
   }, [sucursal, servicios, navigate])
+
+  // Cargar horarios ocupados para la fecha seleccionada
+  useEffect(() => {
+    const cargar = async () => {
+      if (!fechaSeleccionada) return
+      setLoadingHorarios(true)
+      try {
+        const servicioIds = detalles.map((d) => d.servicio.id)
+        const extraIds = detalles.flatMap((d) => d.extras.map((e) => e.id))
+        const response = await axios.post<HorarioOcupado[]>(
+          "/api/Turnos/horarios-ocupados",
+          {
+            sucursalId: sucursal?.id,
+            fecha: fechaSeleccionada.toISOString(),
+            servicioIds,
+            extraIds,
+          },
+        )
+        const ocupados = response.data.map((h) =>
+          new Date(h.fechaHoraInicio).toTimeString().slice(0, 5),
+        )
+        setHorariosOcupadosSeleccionado(ocupados)
+      } catch (error) {
+        console.error("Error cargando horarios ocupados:", error)
+        setHorariosOcupadosSeleccionado([])
+      } finally {
+        setLoadingHorarios(false)
+      }
+    }
+
+    cargar()
+  }, [fechaSeleccionada, detalles, sucursal])
 
   // Generar días de la semana actual
   const generarDiasSemana = (offset = 0) => {
@@ -83,7 +124,7 @@ const SeleccionFechaHora: React.FC = () => {
       if (fecha >= hoy || fecha.toDateString() === hoy.toDateString()) {
         const key = fecha.toLocaleDateString("en-US", { weekday: "long" })
         const horario = horariosLaborales[key]
-        const horariosOcupados = obtenerHorariosOcupados(fecha)
+        const horariosOcupados = obtenerHorariosOcupadosMock(fecha)
 
         dias.push({
           fecha,
@@ -115,6 +156,7 @@ const SeleccionFechaHora: React.FC = () => {
   const handleSeleccionFecha = (fecha: Date) => {
     setFechaSeleccionada(fecha)
     setHoraSeleccionada("")
+    setHorariosOcupadosSeleccionado([])
   }
 
   const handleSeleccionHora = (hora: string) => {
@@ -317,9 +359,15 @@ const SeleccionFechaHora: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {generarFranjas(diaSeleccionado.horario.inicio, diaSeleccionado.horario.fin).map((hora) => {
-                      const estaOcupado = diaSeleccionado.horariosOcupados.includes(hora)
-                      const esSeleccionado = horaSeleccionada === hora
+                    {loadingHorarios ? (
+                      <span className="col-span-full text-[#8d6e63]">Cargando horarios disponibles...</span>
+                    ) : (
+                      generarFranjas(
+                        diaSeleccionado.horario.inicio,
+                        diaSeleccionado.horario.fin,
+                      ).map((hora) => {
+                        const estaOcupado = horariosOcupadosSeleccionado.includes(hora)
+                        const esSeleccionado = horaSeleccionada === hora
 
                       return (
                         <motion.div
@@ -348,7 +396,8 @@ const SeleccionFechaHora: React.FC = () => {
                           </Button>
                         </motion.div>
                       )
-                    })}
+                    })
+                    )}
                   </div>
 
                   {/* Información adicional */}
