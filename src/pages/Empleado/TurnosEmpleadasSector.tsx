@@ -9,7 +9,18 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import axios from "@/api/AxiosInstance"
 import { motion, AnimatePresence } from "framer-motion"
-import { Users, Clock, User, Calendar, ArrowLeft, Loader2, AlertCircle, CheckCircle, RefreshCw } from "lucide-react"
+import {
+  Users,
+  Clock,
+  User,
+  Calendar,
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
+  Check,
+} from "lucide-react"
 
 interface Empleada {
   id: number
@@ -61,6 +72,7 @@ const TurnosEmpleadasSector: React.FC = () => {
   const [turnos, setTurnos] = useState<Turno[]>([])
   const [loadingEmpleadas, setLoadingEmpleadas] = useState(true)
   const [loadingTurnos, setLoadingTurnos] = useState(false)
+  const [processingTurno, setProcessingTurno] = useState<number | null>(null)
   const [error, setError] = useState<string>("")
 
   // Cargar empleadas del sector
@@ -165,6 +177,25 @@ const TurnosEmpleadasSector: React.FC = () => {
     }, 0)
   }
 
+  const marcarTurnoRealizado = async (turnoId: number) => {
+    setProcessingTurno(turnoId)
+    try {
+      console.log(turnoId);
+      // Llamada al endpoint para marcar el turno como realizado
+      await axios.put(`/api/Turnos/${turnoId}/marcar-realizado`)
+
+      // Actualizar el estado local
+      setTurnos((prevTurnos) =>
+        prevTurnos.map((turno) => (turno.id === turnoId ? { ...turno, realizado: true } : turno)),
+      )
+
+     
+    } catch (err) {
+      console.error("Error marcando turno como realizado", err)
+    } finally {
+      setProcessingTurno(null)
+    }
+  }
 
   const refreshTurnos = () => {
     if (selectedEmpleada) {
@@ -227,7 +258,10 @@ const TurnosEmpleadasSector: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold text-[#6d4c41] mb-2">Parámetros faltantes</h3>
               <p className="text-[#8d6e63] mb-4">No se especificó la sucursal o sector</p>
-              <Button onClick={() => navigate("/empleadas")} className="bg-[#a1887f] hover:bg-[#8d6e63] text-white">
+              <Button
+                onClick={() => navigate("/turnos-del-dia")}
+                className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+              >
                 Volver a selección
               </Button>
             </div>
@@ -289,7 +323,7 @@ const TurnosEmpleadasSector: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => navigate("/empleadas")}
+                onClick={() => navigate("/turnos-del-dia")}
                 variant="outline"
                 className="border-[#a1887f] text-[#a1887f] hover:bg-[#a1887f] hover:text-white"
               >
@@ -325,16 +359,16 @@ const TurnosEmpleadasSector: React.FC = () => {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-1 "
+            className="lg:col-span-1"
           >
-            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] sticky top-4 pt-0">
-              <CardHeader className="bg-gradient-to-r from-[#a1887f] to-[#8d6e63] text-white rounded-t-lg py-3">
-                <CardTitle className="flex items-center gap-3 ">
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] sticky top-4">
+              <CardHeader className="bg-gradient-to-r from-[#a1887f] to-[#8d6e63] text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-3">
                   <Users className="h-5 w-5" />
                   Empleadas ({empleadas.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 ">
+              <CardContent className="p-4">
                 <div className="space-y-2">
                   {empleadas.map((empleada) => (
                     <motion.div key={empleada.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -381,8 +415,8 @@ const TurnosEmpleadasSector: React.FC = () => {
             className="lg:col-span-3"
           >
             {selectedEmpleada ? (
-              <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] pt-0">
-                <CardHeader className="bg-gradient-to-r from-[#8d6e63] to-[#6d4c41] text-white rounded-t-lg py-3">
+              <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+                <CardHeader className="bg-gradient-to-r from-[#8d6e63] to-[#6d4c41] text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-3">
                     <Calendar className="h-5 w-5" />
                     Turnos de {selectedEmpleada.nombre} {selectedEmpleada.apellido}
@@ -472,7 +506,7 @@ const TurnosEmpleadasSector: React.FC = () => {
                                       </div>
                                     </div>
 
-                                    <div className="flex flex-col items-end gap-2">
+                                    <div className="flex flex-col items-end gap-3">
                                       <Badge
                                         className={
                                           turno.realizado
@@ -492,9 +526,31 @@ const TurnosEmpleadasSector: React.FC = () => {
                                           </>
                                         )}
                                       </Badge>
+
                                       <p className="text-sm font-semibold text-[#6d4c41]">
                                         ${getTotalPrecio(turno.detalles)}
                                       </p>
+
+                                      {/* Botón para marcar como realizado */}
+                                      {!turno.realizado && (
+                                        <Button
+                                          onClick={() => marcarTurnoRealizado(turno.id)}
+                                          disabled={processingTurno === turno.id}
+                                          className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 h-8"
+                                        >
+                                          {processingTurno === turno.id ? (
+                                            <>
+                                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                              Procesando...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Check className="h-3 w-3 mr-1" />
+                                              Marcar Realizado
+                                            </>
+                                          )}
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                 </CardContent>
