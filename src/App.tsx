@@ -27,8 +27,6 @@ import AsignarHabilidadesEmpleado from './pages/Empleado/AsignarHabilidadesEmple
 import AsignarSectoresEmpleado from './pages/Empleado/AsignarSectoresEmpleado';
 import AsignarHabilidadesServicio from './pages/Servicios/AsignarHabilidadesServicio';
 import AsignarSectoresServicio from './pages/Servicios/AsignarSectoresServicio';
-import ElegirVistaEmpleado from './pages/Empleado/ElegirVistaEmpleado';
-import VistaEmpleado from './pages/Empleado/VistaEmpleado';
 import AsignarExtrasServicio from './pages/Servicios/AsignarExtrasServicio';
 import Dashboard from './pages/Dashboard/DashboardMetrica';
 import SeleccionTipoReserva from './pages/Cliente/SeleccionTipoReserva';
@@ -81,8 +79,6 @@ function App() {
         <Route path="/reserva/tipo" element={<SeleccionTipoReserva/>} />
         <Route path="/reserva/empleada-primero" element={<SeleccionEmpleadaPrimero/>} />
         <Route path="/reserva/fecha-hora-empleada" element={<SeleccionFechaHoraEmpleada />} />
-        <Route path="/elegir-empleada" element={<ElegirVistaEmpleado />} />
-        <Route path="/vista-empleado/:empleadaId" element={<VistaEmpleado />} />
         <Route path="/dashboard" element={<Dashboard/>} />
         <Route path="/empleadas" element={<SeleccionSucursalSector />} />
         <Route path="/empleadas/turnos" element={<TurnosEmpleadasSector/>} />
