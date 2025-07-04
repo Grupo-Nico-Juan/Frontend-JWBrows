@@ -264,38 +264,7 @@ const SucursalForm: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Vista previa */}
-            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#6d4c41]">
-                  <FileText className="h-5 w-5" />
-                  Vista Previa
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gradient-to-r from-[#f8f0ec] to-[#f3e5e1] rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#a1887f] rounded-lg">
-                      <Store className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-[#6d4c41]">{form.nombre || "Nombre de la sucursal"}</h3>
-                    </div>
-                  </div>
-                  <div className="space-y-2 ml-11">
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-[#8d6e63] mt-0.5 flex-shrink-0" />
-                      <span className="text-[#8d6e63]">{form.direccion || "Dirección de la sucursal"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-[#8d6e63] flex-shrink-0" />
-                      <span className="text-[#8d6e63]">{form.telefono || "Teléfono de contacto"}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
+            
             {/* Botones de acción */}
             <div className="flex justify-end gap-4">
               <Button
