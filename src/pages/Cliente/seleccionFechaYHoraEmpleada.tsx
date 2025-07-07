@@ -37,10 +37,10 @@ interface PeriodoLaboral {
 
 }
 
-interface HorarioDisponible {
-  fecha: string
-  hora: string
-  disponible: boolean
+interface HorarioBloqueApi {
+  fechaHoraInicio: string
+  fechaHoraFin: string
+  empleadasDisponibles: Array<{ id: number }>
 }
 
 const SeleccionFechaHoraEmpleada: React.FC = () => {
@@ -50,7 +50,7 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("")
   const [semanaActual, setSemanaActual] = useState(0)
   const [periodosLaborales, setPeriodosLaborales] = useState<PeriodoLaboral[]>([])
-  const [horariosDisponibles, setHorariosDisponibles] = useState<HorarioDisponible[]>([])
+  const [horariosDisponibles, setHorariosDisponibles] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingHorarios, setLoadingHorarios] = useState(false)
 
@@ -95,14 +95,20 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
         const fechaStr = fechaSeleccionada.toISOString().split("T")[0]
         const serviciosIds = detalles.map((d) => d.servicio.id)
 
-        const response = await axios.post<HorarioDisponible[]>("/api/Turnos/horarios-disponibles-empleada", {
+        const response = await axios.post<HorarioBloqueApi[]>("/api/Turnos/horarios-disponibles-empleada", {
           empleadaId: empleado.id,
           fecha: fechaStr,
           servicioIds: serviciosIds,
           sucursalId: sucursal?.id,
         })
 
-        setHorariosDisponibles(response.data)
+        const horas = response.data
+          .filter((bloque) =>
+            bloque.empleadasDisponibles.some((e) => e.id === empleado.id),
+          )
+          .map((bloque) => bloque.fechaHoraInicio.slice(11, 16))
+
+        setHorariosDisponibles(horas)
       } catch (error) {
         console.error("Error cargando horarios disponibles:", error)
         setHorariosDisponibles([])
@@ -426,9 +432,9 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {horariosDisponibles.map((horario, index) => {
-                        const esSeleccionado = horaSeleccionada === horario.hora;
-                        const key = `${horario.hora}-${index}`;
+                      {horariosDisponibles.map((hora, index) => {
+                        const esSeleccionado = horaSeleccionada === hora;
+                        const key = `${hora}-${index}`;
 
                         return (
                           <motion.div
@@ -436,25 +442,19 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.3 }}
-                            whileHover={{ scale: horario.disponible ? 1.05 : 1 }}
-                            whileTap={{ scale: horario.disponible ? 0.95 : 1 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             <Button
                               variant={esSeleccionado ? "default" : "outline"}
-                              className={`w-full h-12 transition-all duration-300 ${!horario.disponible
-                                  ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
-                                  : esSeleccionado
-                                    ? "bg-[#8d6e63] hover:bg-[#795548] text-white border-[#8d6e63]"
-                                    : "border border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#8d6e63]"
+                              className={`w-full h-12 transition-all duration-300 ${esSeleccionado
+                                  ? "bg-[#8d6e63] hover:bg-[#795548] text-white border-[#8d6e63]"
+                                  : "border border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#8d6e63]"
                                 }`}
-                              onClick={() => horario.disponible && handleSeleccionHora(horario.hora)}
-                              disabled={!horario.disponible}
+                              onClick={() => handleSeleccionHora(hora)}
                             >
                               <div className="flex flex-col items-center">
-                                <span className="font-medium">{horario.hora}</span>
-                                {!horario.disponible && (
-                                  <span className="text-xs opacity-75">Ocupado</span>
-                                )}
+                                <span className="font-medium">{hora}</span>
                               </div>
                             </Button>
                           </motion.div>
