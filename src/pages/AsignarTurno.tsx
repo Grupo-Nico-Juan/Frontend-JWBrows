@@ -2,18 +2,20 @@
 
 import type React from "react"
 import { useEffect, useState, type FormEvent } from "react"
-import axios from "../api/AxiosInstance"
+import axios from "@/api/AxiosInstance"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ChevronDownIcon, X, Plus, Clock, AlertCircle } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {ArrowLeft,Plus,Clock,AlertCircle,Save,X,CalendarDays,Users,Building2,MapPin,Scissors,DollarSign, User, Phone, Loader2, CheckCircle,} from "lucide-react"
 
 interface Empleada {
   id: number
@@ -104,7 +106,9 @@ const AsignarTurno: React.FC = () => {
   const [loadingSectores, setLoadingSectores] = useState(false)
   const [loadingServicios, setLoadingServicios] = useState(false)
   const [loadingHorarios, setLoadingHorarios] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [horarioValido, setHorarioValido] = useState<boolean | null>(null)
+  const [error, setError] = useState<string>("")
 
   // Cargar datos iniciales (sucursales y clientes)
   useEffect(() => {
@@ -119,7 +123,9 @@ const AsignarTurno: React.FC = () => {
         setClientes(clientesRes.data)
       } catch (err) {
         console.error("Error cargando datos iniciales:", err)
-        toast.error("Error cargando datos iniciales")
+        setError("Error cargando datos iniciales")
+      } finally {
+        setInitialLoading(false)
       }
     }
 
@@ -152,7 +158,7 @@ const AsignarTurno: React.FC = () => {
         setFormData((prev) => ({ ...prev, sectorId: 0, empleadaId: 0 }))
       } catch (err) {
         console.error("Error cargando sectores:", err)
-        toast.error("Error cargando sectores")
+        setError("Error cargando sectores")
         setSectores([])
       } finally {
         setLoadingSectores(false)
@@ -186,7 +192,7 @@ const AsignarTurno: React.FC = () => {
         setFormData((prev) => ({ ...prev, empleadaId: 0 }))
       } catch (err) {
         console.error("Error cargando empleadas:", err)
-        toast.error("Error cargando empleadas")
+        setError("Error cargando empleadas")
         setEmpleadas([])
       } finally {
         setLoadingEmpleadas(false)
@@ -215,7 +221,7 @@ const AsignarTurno: React.FC = () => {
         setServicios(response.data)
       } catch (err) {
         console.error("Error cargando servicios:", err)
-        toast.error("Error cargando servicios disponibles")
+        setError("Error cargando servicios disponibles")
         setServicios([])
       } finally {
         setLoadingServicios(false)
@@ -261,7 +267,7 @@ const AsignarTurno: React.FC = () => {
         }
       } catch (err) {
         console.error("Error verificando horarios:", err)
-        toast.error("Error verificando disponibilidad de horarios")
+        setError("Error verificando disponibilidad de horarios")
         setHorariosDisponibles([])
         setHorariosOcupados([])
       } finally {
@@ -370,44 +376,45 @@ const AsignarTurno: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError("")
 
     if (!date) {
-      toast.error("Selecciona una fecha")
+      setError("Selecciona una fecha")
       return
     }
 
     if (!formData.sucursalId) {
-      toast.error("Selecciona una sucursal")
+      setError("Selecciona una sucursal")
       return
     }
 
     if (!formData.sectorId) {
-      toast.error("Selecciona un sector")
+      setError("Selecciona un sector")
       return
     }
 
     if (!formData.empleadaId) {
-      toast.error("Selecciona una empleada")
+      setError("Selecciona una empleada")
       return
     }
 
     if (!formData.clienteId) {
-      toast.error("Selecciona un cliente")
+      setError("Selecciona un cliente")
       return
     }
 
     if (formData.detalles.length === 0) {
-      toast.error("Debes agregar al menos un servicio")
+      setError("Debes agregar al menos un servicio")
       return
     }
 
     if (horarioValido === false) {
-      toast.error("El horario seleccionado no está disponible")
+      setError("El horario seleccionado no está disponible")
       return
     }
 
     if (horarioValido === null) {
-      toast.error("Verifica la disponibilidad del horario")
+      setError("Verifica la disponibilidad del horario")
       return
     }
 
@@ -447,7 +454,7 @@ const AsignarTurno: React.FC = () => {
       setHorarioValido(null)
     } catch (err: any) {
       console.error("Error creando turno:", err)
-      toast.error(err.response?.data?.message || "Error al crear el turno")
+      setError(err.response?.data?.message || "Error al crear el turno")
     } finally {
       setLoading(false)
     }
@@ -456,255 +463,403 @@ const AsignarTurno: React.FC = () => {
   const { duracionTotal, precioTotal } = calcularTotales()
   const horariosEmpleada = getHorariosDisponiblesParaEmpleada()
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fdf6f1] p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 25 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-4xl"
-      >
-        <Card className="bg-[#fffaf5] border border-[#e6dcd4] shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-[#6e4b3a] flex items-center gap-2">
-              <Plus className="h-6 w-6" />
-              Crear Nuevo Turno
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Fecha y Hora */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#6e4b3a]">Fecha</label>
-                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between font-normal bg-transparent">
-                        {date ? date.toLocaleDateString() : "Seleccionar fecha"}
-                        <ChevronDownIcon className="h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={(date) => {
-                          setDate(date)
-                          setCalendarOpen(false)
-                        }}
-                        disabled={(date) => date < new Date()}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] flex items-center justify-center">
+        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-[#a1887f]" />
+            <span className="text-[#6d4c41] font-medium">Cargando...</span>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#6e4b3a]">Hora</label>
-                  <div className="relative">
-                    <Input
-                      type="time"
-                      value={time}
-                      onChange={(e) => setTime(e.target.value)}
-                      className={`bg-background ${
-                        horarioValido === false ? "border-red-500" : horarioValido === true ? "border-green-500" : ""
-                      }`}
-                    />
-                    {loadingHorarios && (
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#6e4b3a]"></div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white/80 backdrop-blur-sm rounded-lg border border-[#e0d6cf] p-6"
+        >
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/menu-admin")}
+              className="text-[#8d6e63] hover:text-[#6d4c41] hover:bg-[#f3e5e1]"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#a1887f] rounded-lg">
+                <CalendarDays className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-[#6d4c41]">Crear Nuevo Turno</h1>
+                <p className="text-[#8d6e63]">Completa la información para agendar un nuevo turno</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Error */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3"
+          >
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <span className="text-red-700">{error}</span>
+          </motion.div>
+        )}
+
+        {/* Formulario */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Fecha y Hora */}
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+              <CardHeader>
+                <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5" />
+                  Fecha y Hora
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[#6d4c41] flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" />
+                      Fecha
+                    </Label>
+                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between font-normal border-[#e0d6cf] focus:border-[#a1887f] bg-transparent"
+                        >
+                          {date ? date.toLocaleDateString() : "Seleccionar fecha"}
+                          <CalendarDays className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={(date) => {
+                            setDate(date)
+                            setCalendarOpen(false)
+                          }}
+                          disabled={(date) => date < new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[#6d4c41] flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Hora
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        type="time"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                        className={`border-[#e0d6cf] focus:border-[#a1887f] ${
+                          horarioValido === false ? "border-red-500" : horarioValido === true ? "border-green-500" : ""
+                        }`}
+                      />
+                      {loadingHorarios && (
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-[#a1887f]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Indicador de disponibilidad */}
+                    {horarioValido === true && (
+                      <div className="flex items-center gap-1 text-green-600 text-sm">
+                        <CheckCircle className="h-3 w-3" />
+                        Horario disponible
+                      </div>
+                    )}
+                    {horarioValido === false && (
+                      <div className="flex items-center gap-1 text-red-600 text-sm">
+                        <AlertCircle className="h-3 w-3" />
+                        Horario no disponible
                       </div>
                     )}
                   </div>
-
-                  {/* Indicador de disponibilidad */}
-                  {horarioValido === true && (
-                    <div className="flex items-center gap-1 text-green-600 text-sm">
-                      <Clock className="h-3 w-3" />
-                      Horario disponible
-                    </div>
-                  )}
-                  {horarioValido === false && (
-                    <div className="flex items-center gap-1 text-red-600 text-sm">
-                      <AlertCircle className="h-3 w-3" />
-                      Horario no disponible
-                    </div>
-                  )}
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Sucursal y Sector */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#6e4b3a]">Sucursal</label>
-                  <select
-                    value={formData.sucursalId}
-                    onChange={(e) => setFormData({ ...formData, sucursalId: Number.parseInt(e.target.value) })}
-                    className="w-full border rounded-md px-3 py-2 bg-background"
-                    required
-                  >
-                    <option value={0}>Seleccionar sucursal</option>
-                    {sucursales.map((sucursal) => (
-                      <option key={sucursal.id} value={sucursal.id}>
-                        {sucursal.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#6e4b3a]">Sector</label>
-                  <select
-                    value={formData.sectorId}
-                    onChange={(e) => setFormData({ ...formData, sectorId: Number.parseInt(e.target.value) })}
-                    className="w-full border rounded-md px-3 py-2 bg-background"
-                    required
-                    disabled={!formData.sucursalId || loadingSectores}
-                  >
-                    <option value={0}>{loadingSectores ? "Cargando sectores..." : "Seleccionar sector"}</option>
-                    {sectores.map((sector) => (
-                      <option key={sector.id} value={sector.id}>
-                        {sector.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Cliente y Empleada */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#6e4b3a]">Cliente</label>
-                  <select
-                    value={formData.clienteId}
-                    onChange={(e) => setFormData({ ...formData, clienteId: Number.parseInt(e.target.value) })}
-                    className="w-full border rounded-md px-3 py-2 bg-background"
-                    required
-                  >
-                    <option value={0}>Seleccionar cliente</option>
-                    {clientes.map((cliente) => (
-                      <option key={cliente.id} value={cliente.id}>
-                        {cliente.nombre} {cliente.apellido} - {cliente.telefono}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#6e4b3a]">Empleada</label>
-                  <select
-                    value={formData.empleadaId}
-                    onChange={(e) => setFormData({ ...formData, empleadaId: Number.parseInt(e.target.value) })}
-                    className="w-full border rounded-md px-3 py-2 bg-background"
-                    required
-                    disabled={!formData.sectorId || loadingEmpleadas}
-                  >
-                    <option value={0}>{loadingEmpleadas ? "Cargando empleadas..." : "Seleccionar empleada"}</option>
-                    {empleadas.map((empleada) => (
-                      <option key={empleada.id} value={empleada.id}>
-                        {empleada.nombre} {empleada.apellido}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Servicios */}
-              <div className="space-y-4">
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold text-[#6e4b3a] mb-4">Servicios</h3>
-
-                  {/* Mensaje informativo sobre la dependencia empleada-servicios */}
-                  {formData.sectorId && !formData.empleadaId && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-700">
-                        💡 Los servicios disponibles dependen de las habilidades de la empleada seleccionada
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 mb-4">
-                    <select
-                      value={servicioSeleccionado}
-                      onChange={(e) => setServicioSeleccionado(Number.parseInt(e.target.value))}
-                      className="flex-1 border rounded-md px-3 py-2 bg-background"
-                      disabled={!formData.empleadaId || loadingServicios}
+            {/* Ubicación */}
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+              <CardHeader>
+                <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Ubicación
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[#6d4c41] flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Sucursal
+                    </Label>
+                    <Select
+                      value={formData.sucursalId === 0 ? "" : String(formData.sucursalId)}
+                      onValueChange={(value) => setFormData({ ...formData, sucursalId: Number.parseInt(value) })}
                     >
-                      <option value={0}>
-                        {!formData.empleadaId
-                          ? "Selecciona una empleada primero"
-                          : loadingServicios
-                            ? "Cargando servicios..."
-                            : servicios.length === 0
-                              ? "No hay servicios disponibles para esta empleada"
-                              : "Seleccionar servicio"}
-                      </option>
-                      {servicios.map((servicio) => (
-                        <option key={servicio.id} value={servicio.id}>
-                          {servicio.nombre} - {servicio.duracionMinutos}min - ${servicio.precio}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      type="button"
-                      onClick={handleAgregarServicio}
-                      disabled={!servicioSeleccionado || loadingServicios}
-                      className="bg-[#6e4b3a] hover:bg-[#5a3d2e]"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                      <SelectTrigger className="border-[#e0d6cf] focus:border-[#a1887f]">
+                        <SelectValue placeholder="Seleccionar sucursal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sucursales.map((sucursal) => (
+                          <SelectItem key={sucursal.id} value={String(sucursal.id)}>
+                            {sucursal.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  {/* Lista de servicios agregados */}
-                  {formData.detalles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-[#6d4c41] flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Sector
+                    </Label>
+                    <Select
+                      value={formData.sectorId === 0 ? "" : String(formData.sectorId)}
+                      onValueChange={(value) => setFormData({ ...formData, sectorId: Number.parseInt(value) })}
+                      disabled={!formData.sucursalId || loadingSectores}
+                    >
+                      <SelectTrigger className="border-[#e0d6cf] focus:border-[#a1887f]">
+                        <SelectValue placeholder={loadingSectores ? "Cargando sectores..." : "Seleccionar sector"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sectores.map((sector) => (
+                          <SelectItem key={sector.id} value={String(sector.id)}>
+                            {sector.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!formData.sucursalId && <p className="text-sm text-[#8d6e63]">Primero selecciona una sucursal</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cliente y Empleada */}
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+              <CardHeader>
+                <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Cliente y Empleada
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[#6d4c41] flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Cliente
+                    </Label>
+                    <Select
+                      value={formData.clienteId === 0 ? "" : String(formData.clienteId)}
+                      onValueChange={(value) => setFormData({ ...formData, clienteId: Number.parseInt(value) })}
+                    >
+                      <SelectTrigger className="border-[#e0d6cf] focus:border-[#a1887f]">
+                        <SelectValue placeholder="Seleccionar cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clientes.map((cliente) => (
+                          <SelectItem key={cliente.id} value={String(cliente.id)}>
+                            <div className="flex items-center gap-2">
+                              <span>
+                                {cliente.nombre} {cliente.apellido}
+                              </span>
+                              <Phone className="h-3 w-3 text-[#8d6e63]" />
+                              <span className="text-[#8d6e63]">{cliente.telefono}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[#6d4c41] flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Empleada
+                    </Label>
+                    <Select
+                      value={formData.empleadaId === 0 ? "" : String(formData.empleadaId)}
+                      onValueChange={(value) => setFormData({ ...formData, empleadaId: Number.parseInt(value) })}
+                      disabled={!formData.sectorId || loadingEmpleadas}
+                    >
+                      <SelectTrigger className="border-[#e0d6cf] focus:border-[#a1887f]">
+                        <SelectValue
+                          placeholder={loadingEmpleadas ? "Cargando empleadas..." : "Seleccionar empleada"}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empleadas.map((empleada) => (
+                          <SelectItem key={empleada.id} value={String(empleada.id)}>
+                            {empleada.nombre} {empleada.apellido}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!formData.sectorId && <p className="text-sm text-[#8d6e63]">Primero selecciona un sector</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Servicios */}
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+              <CardHeader>
+                <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
+                  <Scissors className="h-5 w-5" />
+                  Servicios
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Mensaje informativo sobre la dependencia empleada-servicios */}
+                {formData.sectorId && !formData.empleadaId && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-700">
+                      💡 Los servicios disponibles dependen de las habilidades de la empleada seleccionada
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Select
+                    value={servicioSeleccionado === 0 ? "" : String(servicioSeleccionado)}
+                    onValueChange={(value) => setServicioSeleccionado(Number.parseInt(value))}
+                    disabled={!formData.empleadaId || loadingServicios}
+                  >
+                    <SelectTrigger className="flex-1 border-[#e0d6cf] focus:border-[#a1887f]">
+                      <SelectValue
+                        placeholder={
+                          !formData.empleadaId
+                            ? "Selecciona una empleada primero"
+                            : loadingServicios
+                              ? "Cargando servicios..."
+                              : servicios.length === 0
+                                ? "No hay servicios disponibles para esta empleada"
+                                : "Seleccionar servicio"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {servicios.map((servicio) => (
+                        <SelectItem key={servicio.id} value={String(servicio.id)}>
+                          <div className="flex items-center gap-2">
+                            <span>{servicio.nombre}</span>
+                            <Clock className="h-3 w-3 text-[#8d6e63]" />
+                            <span className="text-[#8d6e63]">{servicio.duracionMinutos}min</span>
+                            <DollarSign className="h-3 w-3 text-[#8d6e63]" />
+                            <span className="text-[#8d6e63]">${servicio.precio}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    onClick={handleAgregarServicio}
+                    disabled={!servicioSeleccionado || loadingServicios}
+                    className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Lista de servicios agregados */}
+                {formData.detalles.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-[#6d4c41]">Servicios agregados:</h4>
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-[#6e4b3a]">Servicios agregados:</h4>
-                      <div className="space-y-2">
-                        {formData.detalles.map((detalle, index) => {
-                          const servicio = servicios.find((s) => s.id === detalle.servicioId)
-                          return (
-                            <div key={index} className="flex items-center justify-between bg-muted/50 p-3 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <Badge variant="secondary">{index + 1}</Badge>
-                                <div>
-                                  <p className="font-medium">{servicio?.nombre}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {servicio?.duracionMinutos} min - ${servicio?.precio}
-                                  </p>
+                      {formData.detalles.map((detalle, index) => {
+                        const servicio = servicios.find((s) => s.id === detalle.servicioId)
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-[#f3e5e1]/50 p-3 rounded-lg border border-[#e0d6cf]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Badge variant="secondary" className="bg-[#a1887f] text-white">
+                                {index + 1}
+                              </Badge>
+                              <div>
+                                <p className="font-medium text-[#6d4c41]">{servicio?.nombre}</p>
+                                <div className="flex items-center gap-3 text-sm text-[#8d6e63]">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {servicio?.duracionMinutos} min
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <DollarSign className="h-3 w-3" />${servicio?.precio}
+                                  </div>
                                 </div>
                               </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEliminarServicio(index)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
                             </div>
-                          )
-                        })}
-                      </div>
-
-                      {/* Resumen */}
-                      <div className="bg-[#6e4b3a]/10 p-4 rounded-lg mt-4">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-[#6e4b3a]">Total:</span>
-                          <div className="text-right">
-                            <p className="font-semibold text-[#6e4b3a]">${precioTotal}</p>
-                            <p className="text-sm text-muted-foreground">{duracionTotal} minutos</p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEliminarServicio(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Resumen */}
+                    <div className="bg-[#a1887f]/10 p-4 rounded-lg border border-[#e0d6cf] mt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-[#6d4c41]">Total:</span>
+                        <div className="text-right">
+                          <p className="font-semibold text-[#6d4c41] text-lg">${precioTotal}</p>
+                          <p className="text-sm text-[#8d6e63]">{duracionTotal} minutos</p>
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Horarios disponibles */}
-              {horariosEmpleada.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-[#6e4b3a]">Horarios disponibles para la empleada:</h4>
+            {/* Horarios disponibles */}
+            {horariosEmpleada.length > 0 && (
+              <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Horarios Disponibles
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {horariosEmpleada.map((horario, index) => (
                       <Button
@@ -713,43 +868,64 @@ const AsignarTurno: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setTime(formatearHora(horario.fechaHoraInicio).slice(0, 5))}
-                        className="text-xs"
+                        className="text-xs border-[#e0d6cf] hover:bg-[#f3e5e1] hover:border-[#a1887f]"
                       >
                         {formatearHora(horario.fechaHoraInicio)} - {formatearHora(horario.fechaHoraFin)}
                       </Button>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Alerta de validación */}
+            {horarioValido === false && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-700">
+                  El horario seleccionado no está disponible. Por favor, elige otro horario o verifica la
+                  disponibilidad.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Botones de acción */}
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+              <CardContent className="pt-6">
+                <div className="flex justify-end gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/menu-admin")}
+                    disabled={loading}
+                    className="border-[#e0d6cf] text-[#8d6e63] hover:bg-[#f3e5e1] hover:text-[#6d4c41]"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={loading || horarioValido === false || horarioValido === null}
+                    className="bg-[#a1887f] hover:bg-[#8d6e63] text-white min-w-[140px]"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Crear Turno
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
-
-              {/* Alerta de validación */}
-              {horarioValido === false && (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-700">
-                    El horario seleccionado no está disponible. Por favor, elige otro horario o verifica la
-                    disponibilidad.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Botones */}
-              <div className="flex justify-end gap-4 pt-4">
-                <Button type="button" variant="outline" onClick={() => navigate("/menu-admin")} disabled={loading}>
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={loading || horarioValido === false || horarioValido === null}
-                  className="bg-[#6e4b3a] hover:bg-[#5a3d2e] min-w-[120px]"
-                >
-                  {loading ? "Creando..." : "Crear Turno"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
+              </CardContent>
+            </Card>
+          </form>
+        </motion.div>
+      </div>
     </div>
   )
 }
