@@ -366,7 +366,7 @@ const ConfirmarTurnoCliente: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[#6d4c41] mb-2">Teléfono *</label>
                     <Input
-                      placeholder="Ej: +54 11 1234-5678"
+                      placeholder="Ej: +549 98123123"
                       value={telefono}
                       onChange={(e) => {
                         setTelefono(e.target.value)
