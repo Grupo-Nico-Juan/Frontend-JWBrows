@@ -323,7 +323,7 @@ const TurnosEmpleadasSector: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => navigate("/turnos-del-dia")}
+                onClick={() => navigate("/empleadas")}
                 variant="outline"
                 className="border-[#a1887f] text-[#a1887f] hover:bg-[#a1887f] hover:text-white"
               >
