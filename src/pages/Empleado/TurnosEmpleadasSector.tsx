@@ -252,7 +252,7 @@ const TurnosEmpleadasSector: React.FC = () => {
   if (!sucursalId || !sectorId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] flex items-center justify-center p-4">
-        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf] max-w-md w-full">
+        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf] max-w-md w-full ">
           <div className="text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
             <div>
@@ -361,8 +361,8 @@ const TurnosEmpleadasSector: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="lg:col-span-1"
           >
-            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] sticky top-4">
-              <CardHeader className="bg-gradient-to-r from-[#a1887f] to-[#8d6e63] text-white rounded-t-lg">
+            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] sticky top-4 pt-0">
+              <CardHeader className="bg-gradient-to-r from-[#a1887f] to-[#8d6e63] text-white rounded-t-lg py-3">
                 <CardTitle className="flex items-center gap-3">
                   <Users className="h-5 w-5" />
                   Empleadas ({empleadas.length})
@@ -415,8 +415,8 @@ const TurnosEmpleadasSector: React.FC = () => {
             className="lg:col-span-3"
           >
             {selectedEmpleada ? (
-              <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
-                <CardHeader className="bg-gradient-to-r from-[#8d6e63] to-[#6d4c41] text-white rounded-t-lg">
+              <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] pt-0">
+                <CardHeader className="bg-gradient-to-r from-[#8d6e63] to-[#6d4c41] text-white rounded-t-lg py-3">
                   <CardTitle className="flex items-center gap-3">
                     <Calendar className="h-5 w-5" />
                     Turnos de {selectedEmpleada.nombre} {selectedEmpleada.apellido}
