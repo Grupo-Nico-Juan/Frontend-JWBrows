@@ -74,7 +74,7 @@ const Registro: React.FC = () => {
   }
 
   const handleBackToLogin = () => {
-    navigate("/login")
+    navigate("/admin")
   }
 
   if (success) {
