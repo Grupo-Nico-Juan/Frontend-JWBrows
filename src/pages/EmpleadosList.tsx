@@ -19,30 +19,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  Users,
-  Plus,
-  Search,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Settings,
-  MapPin,
-  Clock,
-  Mail,
-  Filter,
-  Grid3X3,
-  List,
-  Loader2,
-  AlertCircle,
-} from "lucide-react"
+import { Users, Plus, Search, MoreVertical, Edit, Trash2, Settings, MapPin, Clock, Mail, Filter, Grid3X3, List, Loader2, AlertCircle, Palette } from 'lucide-react'
 
 interface Empleado {
   id: number
   nombre: string
   apellido: string
-  email: string
   cargo: string
+  color: string
 }
 
 interface Usuario {
@@ -65,7 +49,6 @@ const EmpleadosList: React.FC = () => {
       navigate("/")
       return
     }
-
     const fetchEmpleados = async () => {
       setLoading(true)
       try {
@@ -78,36 +61,30 @@ const EmpleadosList: React.FC = () => {
         setLoading(false)
       }
     }
-
     fetchEmpleados()
   }, [usuario, navigate])
 
   // Filtrar empleados
   useEffect(() => {
     let filtered = empleados
-
     // Filtro por búsqueda
     if (searchTerm) {
       filtered = filtered.filter(
         (emp) =>
           emp.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
           emp.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
           emp.cargo.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
-
     // Filtro por cargo
     if (selectedCargo !== "todos") {
       filtered = filtered.filter((emp) => emp.cargo === selectedCargo)
     }
-
     setFilteredEmpleados(filtered)
   }, [empleados, searchTerm, selectedCargo])
 
   const handleDelete = async (id: number, nombre: string, apellido: string) => {
     if (!window.confirm(`¿Estás seguro de eliminar a ${nombre} ${apellido}?`)) return
-
     try {
       await axios.delete(`/api/Empleado/${id}`)
       setEmpleados((prev) => prev.filter((e) => e.id !== id))
@@ -138,11 +115,16 @@ const EmpleadosList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] flex items-center justify-center">
-        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+      <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] via-[#f8f0e8] to-[#f3e9dc] flex items-center justify-center">
+        {/* Elementos decorativos de fondo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-60 h-60 sm:w-80 sm:h-80 bg-[#d4bfae] rounded-full opacity-10 blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-60 h-60 sm:w-80 sm:h-80 bg-[#a37e63] rounded-full opacity-10 blur-3xl"></div>
+        </div>
+        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e1cfc0] shadow-2xl">
           <div className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-[#a1887f]" />
-            <span className="text-[#6d4c41] font-medium">Cargando empleados...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-[#7a5b4c]" />
+            <span className="text-[#7a5b4c] font-medium">Cargando empleados...</span>
           </div>
         </Card>
       </div>
@@ -150,32 +132,37 @@ const EmpleadosList: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] via-[#f8f0e8] to-[#f3e9dc] p-6">
+      {/* Elementos decorativos de fondo */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-60 h-60 sm:w-80 sm:h-80 bg-[#d4bfae] rounded-full opacity-10 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-60 h-60 sm:w-80 sm:h-80 bg-[#a37e63] rounded-full opacity-10 blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white/80 backdrop-blur-sm rounded-lg border border-[#e0d6cf] p-6"
+          className="bg-white/80 backdrop-blur-sm rounded-xl border-2 border-[#e1cfc0] p-6 shadow-lg"
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#a1887f] rounded-lg">
+              <div className="p-3 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] rounded-xl shadow-lg">
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-[#6d4c41]">Gestión de Empleados</h1>
+                <h1 className="text-2xl font-bold text-[#7a5b4c]">Gestión de Empleados</h1>
                 <p className="text-[#8d6e63]">
                   {filteredEmpleados.length} de {empleados.length} empleados
                 </p>
               </div>
             </div>
-
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => navigate("/empleados/nuevo")}
-                className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+                className="bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Empleado
@@ -190,7 +177,7 @@ const EmpleadosList: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Card className="bg-white/60 backdrop-blur-sm border-[#e0d6cf]">
+          <Card className="bg-white/80 backdrop-blur-sm border-2 border-[#e1cfc0] shadow-lg">
             <CardContent className="p-4">
               <div className="flex flex-col lg:flex-row gap-4 items-center">
                 {/* Búsqueda */}
@@ -200,17 +187,16 @@ const EmpleadosList: React.FC = () => {
                     placeholder="Buscar por nombre, email o cargo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f]"
+                    className="pl-10 bg-[#fdf6f1] border-2 border-[#e1cfc0] focus:border-[#a37e63] focus:ring-2 focus:ring-[#a37e63]/20 rounded-xl transition-all duration-200"
                   />
                 </div>
-
                 {/* Filtro por cargo */}
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-[#8d6e63]" />
                   <select
                     value={selectedCargo}
                     onChange={(e) => setSelectedCargo(e.target.value)}
-                    className="px-3 py-2 border border-[#d2bfae] rounded-md text-[#6d4c41] bg-white focus:ring-2 focus:ring-[#a1887f] focus:border-transparent"
+                    className="px-3 py-2 border-2 border-[#e1cfc0] rounded-xl text-[#7a5b4c] bg-[#fdf6f1] focus:ring-2 focus:ring-[#a37e63] focus:border-[#a37e63] transition-all duration-200"
                   >
                     <option value="todos">Todos los cargos</option>
                     {cargosUnicos.map((cargo) => (
@@ -220,14 +206,17 @@ const EmpleadosList: React.FC = () => {
                     ))}
                   </select>
                 </div>
-
                 {/* Toggle de vista */}
-                <div className="flex items-center gap-1 bg-[#f8f0ec] rounded-lg p-1">
+                <div className="flex items-center gap-1 bg-[#f8f0ec] rounded-xl p-1 border border-[#e1cfc0]">
                   <Button
                     variant={viewMode === "table" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("table")}
-                    className={viewMode === "table" ? "bg-[#a1887f] text-white" : "text-[#8d6e63]"}
+                    className={
+                      viewMode === "table"
+                        ? "bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] text-white shadow-md"
+                        : "text-[#8d6e63] hover:bg-[#e1cfc0]"
+                    }
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -235,7 +224,11 @@ const EmpleadosList: React.FC = () => {
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
-                    className={viewMode === "grid" ? "bg-[#a1887f] text-white" : "text-[#8d6e63]"}
+                    className={
+                      viewMode === "grid"
+                        ? "bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] text-white shadow-md"
+                        : "text-[#8d6e63] hover:bg-[#e1cfc0]"
+                    }
                   >
                     <Grid3X3 className="h-4 w-4" />
                   </Button>
@@ -250,10 +243,10 @@ const EmpleadosList: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3"
+            className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-center gap-3 shadow-lg"
           >
             <AlertCircle className="h-5 w-5 text-red-500" />
-            <span className="text-red-700">{error}</span>
+            <span className="text-red-700 font-medium">{error}</span>
           </motion.div>
         )}
 
@@ -267,9 +260,9 @@ const EmpleadosList: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-12"
             >
-              <Card className="bg-white/60 backdrop-blur-sm border-[#e0d6cf] p-8">
-                <Users className="h-16 w-16 text-[#d2bfae] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-[#6d4c41] mb-2">
+              <Card className="bg-white/80 backdrop-blur-sm border-2 border-[#e1cfc0] p-8 shadow-lg">
+                <Users className="h-16 w-16 text-[#d4bfae] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[#7a5b4c] mb-2">
                   {searchTerm || selectedCargo !== "todos" ? "No se encontraron empleados" : "No hay empleados"}
                 </h3>
                 <p className="text-[#8d6e63] mb-4">
@@ -280,7 +273,7 @@ const EmpleadosList: React.FC = () => {
                 {!searchTerm && selectedCargo === "todos" && (
                   <Button
                     onClick={() => navigate("/empleados/nuevo")}
-                    className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+                    className="bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Agregar Empleado
@@ -297,16 +290,16 @@ const EmpleadosList: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+              <Card className="bg-white/80 backdrop-blur-sm border-2 border-[#e1cfc0] shadow-lg">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-[#f3e5e1] hover:bg-[#f3e5e1]">
-                          <TableHead className="text-[#6d4c41] font-semibold">Empleado</TableHead>
-                          <TableHead className="text-[#6d4c41] font-semibold">Email</TableHead>
-                          <TableHead className="text-[#6d4c41] font-semibold">Cargo</TableHead>
-                          <TableHead className="text-[#6d4c41] font-semibold text-center">Acciones</TableHead>
+                        <TableRow className="bg-gradient-to-r from-[#f8f0ec] to-[#f3e9dc] hover:from-[#f8f0ec] hover:to-[#f3e9dc] border-b-2 border-[#e1cfc0]">
+                          <TableHead className="text-[#7a5b4c] font-bold">Empleado</TableHead>
+                          <TableHead className="text-[#7a5b4c] font-bold">Cargo</TableHead>
+                          <TableHead className="text-[#7a5b4c] font-bold">Color</TableHead>
+                          <TableHead className="text-[#7a5b4c] font-bold text-center">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -316,17 +309,20 @@ const EmpleadosList: React.FC = () => {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.05 }}
-                            className="hover:bg-[#f8f0ec] transition-colors"
+                            className="hover:bg-[#f8f0ec] transition-colors border-b border-[#e1cfc0]/50"
                           >
                             <TableCell>
                               <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarFallback className="bg-[#a1887f] text-white text-sm">
+                                <Avatar className="h-10 w-10 shadow-md">
+                                  <AvatarFallback
+                                    className="text-white text-sm font-semibold"
+                                    style={{ backgroundColor: emp.color || "#7a5b4c" }}
+                                  >
                                     {getInitials(emp.nombre, emp.apellido)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <div className="font-medium text-[#6d4c41]">
+                                  <div className="font-medium text-[#7a5b4c]">
                                     {emp.nombre} {emp.apellido}
                                   </div>
                                   <div className="text-sm text-[#8d6e63]">ID: {emp.id}</div>
@@ -334,23 +330,25 @@ const EmpleadosList: React.FC = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-[#8d6e63]" />
-                                <span className="text-[#6d4c41]">{emp.email}</span>
-                              </div>
+                              <Badge className={getCargoColor(emp.cargo)}>{emp.cargo}</Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge className={getCargoColor(emp.cargo)}>{emp.cargo}</Badge>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-6 h-6 rounded-full border-2 border-white shadow-md"
+                                  style={{ backgroundColor: emp.color || "#7a5b4c" }}
+                                />
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-[#e1cfc0]">
                                       <MoreVertical className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border-[#e1cfc0]">
                                     <DropdownMenuItem onClick={() => navigate(`/empleados/editar/${emp.id}`)}>
                                       <Edit className="h-4 w-4 mr-2" />
                                       Editar
@@ -407,47 +405,54 @@ const EmpleadosList: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
-                  <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf] hover:shadow-lg transition-all duration-300 group">
+                  <Card className="bg-white/80 backdrop-blur-sm border-2 border-[#e1cfc0] hover:shadow-xl transition-all duration-300 group">
                     <CardContent className="p-6">
                       <div className="text-center mb-4">
-                        <Avatar className="h-16 w-16 mx-auto mb-3">
-                          <AvatarFallback className="bg-[#a1887f] text-white text-lg">
+                        <Avatar className="h-16 w-16 mx-auto mb-3 shadow-lg">
+                          <AvatarFallback
+                            className="text-white text-lg font-semibold"
+                            style={{ backgroundColor: emp.color || "#7a5b4c" }}
+                          >
                             {getInitials(emp.nombre, emp.apellido)}
                           </AvatarFallback>
                         </Avatar>
-                        <h3 className="font-semibold text-[#6d4c41] text-lg">
+                        <h3 className="font-semibold text-[#7a5b4c] text-lg">
                           {emp.nombre} {emp.apellido}
                         </h3>
-                        <p className="text-sm text-[#8d6e63] flex items-center justify-center gap-1 mt-1">
-                          <Mail className="h-3 w-3" />
-                          {emp.email}
-                        </p>
                       </div>
-
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-[#8d6e63]">Cargo:</span>
                           <Badge className={getCargoColor(emp.cargo)}>{emp.cargo}</Badge>
                         </div>
                         <div className="flex items-center justify-between">
+                          <span className="text-sm text-[#8d6e63]">Color:</span>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
+                              style={{ backgroundColor: emp.color || "#7a5b4c" }}
+                            />
+                            <span className="text-xs font-mono text-[#8d6e63]">{emp.color || "#7a5b4c"}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
                           <span className="text-sm text-[#8d6e63]">ID:</span>
-                          <span className="text-sm font-medium text-[#6d4c41]">{emp.id}</span>
+                          <span className="text-sm font-medium text-[#7a5b4c]">{emp.id}</span>
                         </div>
                       </div>
-
-                      <div className="mt-4 pt-4 border-t border-[#e0d6cf]">
+                      <div className="mt-4 pt-4 border-t border-[#e1cfc0]">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] bg-transparent"
+                              className="w-full border-2 border-[#e1cfc0] text-[#7a5b4c] hover:bg-[#f8f0ec] bg-transparent hover:border-[#a37e63] transition-all duration-200"
                             >
                               <MoreVertical className="h-4 w-4 mr-2" />
                               Acciones
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => navigate(`/empleados/editar/${emp.id}`)}>
+                          <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-sm border-[#e1cfc0]">
+                            <DropdownMenuItem onClick={() => navigate(`/empleado-form/${emp.id}`)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
@@ -488,3 +493,4 @@ const EmpleadosList: React.FC = () => {
 }
 
 export default EmpleadosList
+
