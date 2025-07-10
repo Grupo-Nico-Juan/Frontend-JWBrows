@@ -34,6 +34,7 @@ interface Empleado {
   apellido: string;
 }
 
+
 interface ClienteData {
   nombre: string;
   apellido: string;
