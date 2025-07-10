@@ -34,6 +34,7 @@ import SeleccionEmpleadaPrimero from './pages/Cliente/SeleccionEmpleadaPrimero';
 import SeleccionFechaHoraEmpleada from './pages/Cliente/seleccionFechaYHoraEmpleada';
 import TurnosEmpleadasSector from './pages/Empleado/TurnosEmpleadasSector';
 import SeleccionSucursalSector from './pages/Empleado/SeleccionSucursalSector';
+import CalendarioTurnosAdmin from './pages/Admin/CalendarioTurnosAdmin';
 
 function App() {
 
@@ -80,6 +81,7 @@ function App() {
         <Route path="/reserva/empleada-primero" element={<SeleccionEmpleadaPrimero/>} />
         <Route path="/reserva/fecha-hora-empleada" element={<SeleccionFechaHoraEmpleada />} />
         <Route path="/dashboard" element={<Dashboard/>} />
+        <Route path="/calendario-admin" element={<CalendarioTurnosAdmin />} />
         <Route path="/empleadas" element={<SeleccionSucursalSector />} />
         <Route path="/empleadas/turnos" element={<TurnosEmpleadasSector/>} />
       </Routes>
