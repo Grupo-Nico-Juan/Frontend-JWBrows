@@ -3,11 +3,11 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import axios from "../../api/AxiosInstance"
 import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,22 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { motion, AnimatePresence } from "framer-motion"
-import { Scissors, Plus, MoreVertical, Edit, Trash2, Settings, MapPin, Clock, DollarSign, Loader2, AlertCircle, Star, Search, X } from 'lucide-react'
+import {
+  Scissors,
+  Plus,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Settings,
+  MapPin,
+  Clock,
+  DollarSign,
+  Loader2,
+  AlertCircle,
+  Star,
+  Search,
+  X,
+} from "lucide-react"
 
 interface Servicio {
   id: number
@@ -140,53 +155,53 @@ const ServiciosList: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl border-0 shadow-xl p-4 sm:p-6"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] rounded-xl flex items-center justify-center"
-              >
-                <Scissors className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-              </motion.div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#7a5b4c]">Gestión de Servicios</h1>
-                <p className="text-[#7a5b4c]/70 text-sm sm:text-base">
-                  {searchTerm
-                    ? `${serviciosFiltrados.length} de ${servicios.length} servicios`
-                    : `${servicios.length} servicios disponibles`}
-                </p>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] rounded-xl flex items-center justify-center"
+                >
+                  <Scissors className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+                </motion.div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-[#7a5b4c]">Gestión de Servicios</h1>
+                  <p className="text-[#7a5b4c]/70 text-sm sm:text-base">
+                    {searchTerm
+                      ? `${serviciosFiltrados.length} de ${servicios.length} servicios`
+                      : `${servicios.length} servicios disponibles`}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#7a5b4c]/60" />
-                <Input
-                  placeholder="Buscar servicios..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10 w-full sm:w-64 h-12 bg-[#fdf6f1] text-[#7a5b4c] border-2 border-[#e1cfc0] focus:border-[#a37e63] focus:ring-2 focus:ring-[#a37e63]/20 rounded-xl transition-all duration-200"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#7a5b4c]/60 hover:text-[#7a5b4c] transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <motion.button
+              <Button
                 onClick={() => navigate("/servicios/nuevo")}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-4 sm:px-6 py-3 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white font-semibold rounded-xl flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base"
+                className="bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl w-full sm:w-auto"
               >
-                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="sm:hidden">Nuevo Servicio</span>
                 <span className="hidden sm:inline">Nuevo Servicio</span>
-                <span className="sm:hidden">Nuevo</span>
-              </motion.button>
+              </Button>
+            </div>
+
+            {/* Barra de búsqueda */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#7a5b4c]/60" />
+              <Input
+                placeholder="Buscar servicios..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-10 h-12 bg-[#fdf6f1] text-[#7a5b4c] border-2 border-[#e1cfc0] focus:border-[#a37e63] focus:ring-2 focus:ring-[#a37e63]/20 rounded-xl transition-all duration-200"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#7a5b4c]/60 hover:text-[#7a5b4c] transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -228,183 +243,262 @@ const ServiciosList: React.FC = () => {
                 </motion.div>
                 {searchTerm ? (
                   <>
-                    <h3 className="text-lg sm:text-xl font-semibold text-[#7a5b4c] mb-2">No se encontraron servicios</h3>
+                    <h3 className="text-lg sm:text-xl font-semibold text-[#7a5b4c] mb-2">
+                      No se encontraron servicios
+                    </h3>
                     <p className="text-[#7a5b4c]/70 mb-4 text-sm sm:text-base">
                       No hay servicios que coincidan con "{searchTerm}"
                     </p>
-                    <motion.button
+                    <Button
                       onClick={() => setSearchTerm("")}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-6 py-3 bg-white border-2 border-[#a37e63] text-[#a37e63] hover:bg-[#a37e63] hover:text-white font-medium rounded-xl transition-all duration-200"
+                      variant="outline"
+                      className="border-[#a37e63] text-[#a37e63] hover:bg-[#a37e63] hover:text-white"
                     >
                       Limpiar búsqueda
-                    </motion.button>
+                    </Button>
                   </>
                 ) : (
                   <>
                     <h3 className="text-lg sm:text-xl font-semibold text-[#7a5b4c] mb-2">No hay servicios</h3>
-                    <p className="text-[#7a5b4c]/70 mb-4 text-sm sm:text-base">
-                      Comienza agregando tu primer servicio
-                    </p>
-                    <motion.button
+                    <p className="text-[#7a5b4c]/70 mb-4 text-sm sm:text-base">Comienza agregando tu primer servicio</p>
+                    <Button
                       onClick={() => navigate("/servicios/nuevo")}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-6 py-3 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white font-semibold rounded-xl flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl mx-auto"
+                      className="bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4 mr-2" />
                       <span>Agregar Servicio</span>
-                    </motion.button>
+                    </Button>
                   </>
                 )}
               </Card>
             </motion.div>
           ) : (
             <motion.div
-              key="table"
+              key="content"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-xl sm:rounded-2xl overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-[#7a5b4c]/10 to-[#a37e63]/10 hover:from-[#7a5b4c]/10 hover:to-[#a37e63]/10 border-b border-[#e1cfc0]">
-                          <TableHead className="text-[#7a5b4c] font-semibold text-sm sm:text-base py-4">
-                            Servicio
-                          </TableHead>
-                          <TableHead className="text-[#7a5b4c] font-semibold text-sm sm:text-base py-4">
-                            Descripción
-                          </TableHead>
-                          <TableHead className="text-[#7a5b4c] font-semibold text-sm sm:text-base py-4">
-                            Duración
-                          </TableHead>
-                          <TableHead className="text-[#7a5b4c] font-semibold text-sm sm:text-base py-4">
-                            Precio
-                          </TableHead>
-                          <TableHead className="text-[#7a5b4c] font-semibold text-center text-sm sm:text-base py-4">
-                            Acciones
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {serviciosFiltrados.map((servicio, index) => (
-                          <motion.tr
-                            key={servicio.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: index * 0.05 }}
-                            className="hover:bg-[#fdf6f1]/50 transition-colors border-b border-[#e1cfc0]/30"
-                          >
-                            <TableCell className="py-4">
-                              <div className="flex items-center gap-3">
-                                <motion.div
-                                  whileHover={{ scale: 1.1 }}
-                                  className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] rounded-xl flex items-center justify-center"
-                                >
-                                  <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                                </motion.div>
-                                <div>
-                                  <div className="font-semibold text-[#7a5b4c] text-sm sm:text-base">
-                                    {servicio.nombre}
+              {/* Vista de tabla para desktop */}
+              <div className="hidden lg:block">
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-xl sm:rounded-2xl overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gradient-to-r from-[#7a5b4c]/10 to-[#a37e63]/10 hover:from-[#7a5b4c]/10 hover:to-[#a37e63]/10 border-b border-[#e1cfc0]">
+                            <TableHead className="text-[#7a5b4c] font-semibold py-4">Servicio</TableHead>
+                            <TableHead className="text-[#7a5b4c] font-semibold py-4">Descripción</TableHead>
+                            <TableHead className="text-[#7a5b4c] font-semibold py-4">Duración</TableHead>
+                            <TableHead className="text-[#7a5b4c] font-semibold py-4">Precio</TableHead>
+                            <TableHead className="text-[#7a5b4c] font-semibold text-center py-4">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {serviciosFiltrados.map((servicio, index) => (
+                            <motion.tr
+                              key={servicio.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.05 }}
+                              className="hover:bg-[#fdf6f1]/50 transition-colors border-b border-[#e1cfc0]/30"
+                            >
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] rounded-xl flex items-center justify-center">
+                                    <Scissors className="h-5 w-5 text-white" />
                                   </div>
-                                  <div className="text-xs sm:text-sm text-[#7a5b4c]/60">ID: {servicio.id}</div>
+                                  <div>
+                                    <div className="font-semibold text-[#7a5b4c]">{servicio.nombre}</div>
+                                    <div className="text-sm text-[#7a5b4c]/60">ID: {servicio.id}</div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="max-w-xs">
+                                  <p className="text-[#7a5b4c] text-sm line-clamp-2">{servicio.descripcion}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-[#7a5b4c]/60" />
+                                  <span className="text-[#7a5b4c] font-medium text-sm">
+                                    {formatDuration(servicio.duracionMinutos)}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <DollarSign className="h-4 w-4 text-[#7a5b4c]/60" />
+                                  <Badge
+                                    className={`${getPriceColor(servicio.precio)} font-semibold text-sm px-2 py-1 rounded-lg`}
+                                  >
+                                    ${servicio.precio}
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex items-center justify-center">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" className="h-10 w-10 p-0 hover:bg-[#fdf6f1]">
+                                        <MoreVertical className="h-4 w-4 text-[#7a5b4c]" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      align="end"
+                                      className="w-48 bg-white/95 backdrop-blur-sm border border-[#e1cfc0] rounded-xl shadow-xl"
+                                    >
+                                      <DropdownMenuItem
+                                        onClick={() => navigate(`/servicios/editar/${servicio.id}`)}
+                                        className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                      >
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Editar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator className="bg-[#e1cfc0]" />
+                                      <DropdownMenuItem
+                                        onClick={() => navigate(`/servicios/${servicio.id}/habilidades`)}
+                                        className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                      >
+                                        <Settings className="h-4 w-4 mr-2" />
+                                        Habilidades
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => navigate(`/servicios/${servicio.id}/sectores`)}
+                                        className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                      >
+                                        <MapPin className="h-4 w-4 mr-2" />
+                                        Sectores
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => navigate(`/servicios/${servicio.id}/extras`)}
+                                        className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                      >
+                                        <Star className="h-4 w-4 mr-2" />
+                                        Extras ({extrasCount[servicio.id] ?? 0})
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator className="bg-[#e1cfc0]" />
+                                      <DropdownMenuItem
+                                        onClick={() => handleDelete(servicio.id, servicio.nombre)}
+                                        className="text-red-600 focus:text-red-600 hover:bg-red-50 rounded-lg mx-1 my-1"
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Eliminar
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </TableCell>
+                            </motion.tr>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Vista de cards para móvil y tablet */}
+              <div className="lg:hidden space-y-4">
+                {serviciosFiltrados.map((servicio, index) => (
+                  <motion.div
+                    key={servicio.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-xl overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Scissors className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-[#7a5b4c] text-lg truncate">{servicio.nombre}</h3>
+                                <p className="text-sm text-[#7a5b4c]/60">ID: {servicio.id}</p>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-[#fdf6f1] flex-shrink-0">
+                                    <MoreVertical className="h-4 w-4 text-[#7a5b4c]" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-48 bg-white/95 backdrop-blur-sm border border-[#e1cfc0] rounded-xl shadow-xl"
+                                >
+                                  <DropdownMenuItem
+                                    onClick={() => navigate(`/servicios/editar/${servicio.id}`)}
+                                    className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator className="bg-[#e1cfc0]" />
+                                  <DropdownMenuItem
+                                    onClick={() => navigate(`/servicios/${servicio.id}/habilidades`)}
+                                    className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                  >
+                                    <Settings className="h-4 w-4 mr-2" />
+                                    Habilidades
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => navigate(`/servicios/${servicio.id}/sectores`)}
+                                    className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                  >
+                                    <MapPin className="h-4 w-4 mr-2" />
+                                    Sectores
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => navigate(`/servicios/${servicio.id}/extras`)}
+                                    className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                  >
+                                    <Star className="h-4 w-4 mr-2" />
+                                    Extras ({extrasCount[servicio.id] ?? 0})
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator className="bg-[#e1cfc0]" />
+                                  <DropdownMenuItem
+                                    onClick={() => handleDelete(servicio.id, servicio.nombre)}
+                                    className="text-red-600 focus:text-red-600 hover:bg-red-50 rounded-lg mx-1 my-1"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+
+                            <p className="text-[#7a5b4c] text-sm mb-3 line-clamp-2">{servicio.descripcion}</p>
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4 text-[#7a5b4c]/60" />
+                                  <span className="text-[#7a5b4c] font-medium text-sm">
+                                    {formatDuration(servicio.duracionMinutos)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-4 w-4 text-[#7a5b4c]/60" />
+                                  <Badge
+                                    className={`${getPriceColor(servicio.precio)} font-semibold text-sm px-2 py-1 rounded-lg`}
+                                  >
+                                    ${servicio.precio}
+                                  </Badge>
                                 </div>
                               </div>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <div className="max-w-xs">
-                                <p className="text-[#7a5b4c] text-xs sm:text-sm line-clamp-2">
-                                  {servicio.descripcion}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-[#7a5b4c]/60" />
-                                <span className="text-[#7a5b4c] font-medium text-xs sm:text-sm">
-                                  {formatDuration(servicio.duracionMinutos)}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <div className="flex items-center gap-2">
-                                <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-[#7a5b4c]/60" />
-                                <Badge
-                                  className={`${getPriceColor(servicio.precio)} font-semibold text-xs sm:text-sm px-2 py-1 rounded-lg`}
-                                >
-                                  ${servicio.precio}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <div className="flex items-center justify-center">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <motion.button
-                                      whileHover={{ scale: 1.1 }}
-                                      whileTap={{ scale: 0.9 }}
-                                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg hover:bg-[#fdf6f1] transition-colors flex items-center justify-center"
-                                    >
-                                      <MoreVertical className="h-4 w-4 text-[#7a5b4c]" />
-                                    </motion.button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="w-48 bg-white/95 backdrop-blur-sm border border-[#e1cfc0] rounded-xl shadow-xl"
-                                  >
-                                    <DropdownMenuItem
-                                      onClick={() => navigate(`/servicios/editar/${servicio.id}`)}
-                                      className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
-                                    >
-                                      <Edit className="h-4 w-4 mr-2" />
-                                      Editar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-[#e1cfc0]" />
-                                    <DropdownMenuItem
-                                      onClick={() => navigate(`/servicios/${servicio.id}/habilidades`)}
-                                      className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
-                                    >
-                                      <Settings className="h-4 w-4 mr-2" />
-                                      Habilidades
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => navigate(`/servicios/${servicio.id}/sectores`)}
-                                      className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
-                                    >
-                                      <MapPin className="h-4 w-4 mr-2" />
-                                      Sectores
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => navigate(`/servicios/${servicio.id}/extras`)}
-                                      className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
-                                    >
-                                      <Star className="h-4 w-4 mr-2" />
-                                      Extras ({extrasCount[servicio.id] ?? 0})
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-[#e1cfc0]" />
-                                    <DropdownMenuItem
-                                      onClick={() => handleDelete(servicio.id, servicio.nombre)}
-                                      className="text-red-600 focus:text-red-600 hover:bg-red-50 rounded-lg mx-1 my-1"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Eliminar
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </TableCell>
-                          </motion.tr>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
