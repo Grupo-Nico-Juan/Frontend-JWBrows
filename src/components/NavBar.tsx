@@ -86,7 +86,7 @@ export const NavBar: React.FC = () => {
     configuracion: [
       {
         title: "Períodos Laborales",
-        path: "/periodos-laborales",
+        path: "/periodos-laborales/nuevo",
         icon: IconClock,
         description: "Horarios de trabajo",
       },
