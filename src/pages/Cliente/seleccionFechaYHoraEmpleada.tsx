@@ -27,26 +27,30 @@ import {
 interface PeriodoLaboral {
   id: number
   empleadaId: number
-  diaSemana: number // 0 = Domingo, 1 = Lunes, etc.
-  horaInicio: string
-  horaFin: string
-  activo: boolean
+  tipo: "HorarioHabitual" | "Licencia"
+  diaSemana?: string // "Monday", "Tuesday", etc.
+  horaInicio?: string
+  horaFin?: string
+  desde?: string
+  hasta?: string
+  motivo?: string
+
 }
 
-interface HorarioDisponible {
-  fecha: string
-  hora: string
-  disponible: boolean
+interface HorarioBloqueApi {
+  fechaHoraInicio: string
+  fechaHoraFin: string
+  empleadasDisponibles: Array<{ id: number }>
 }
 
 const SeleccionFechaHoraEmpleada: React.FC = () => {
   const navigate = useNavigate()
-  const { setFechaHora, sucursal, servicios, empleado } = useTurno()
+  const { setFechaHora, sucursal, servicios, detalles, empleado } = useTurno()
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("")
   const [semanaActual, setSemanaActual] = useState(0)
   const [periodosLaborales, setPeriodosLaborales] = useState<PeriodoLaboral[]>([])
-  const [horariosDisponibles, setHorariosDisponibles] = useState<HorarioDisponible[]>([])
+  const [horariosDisponibles, setHorariosDisponibles] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingHorarios, setLoadingHorarios] = useState(false)
 
@@ -64,8 +68,12 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
 
       setLoading(true)
       try {
-        const response = await axios.get<PeriodoLaboral[]>(`/api/PeriodoLaboral/empleada/${empleado.id}`)
-        setPeriodosLaborales(response.data.filter((p) => p.activo))
+        const response = await axios.get<PeriodoLaboral[]>(
+          `/api/PeriodoLaboral/empleada/${empleado.id}`,
+        )
+        setPeriodosLaborales(
+          response.data.filter((p) => p.tipo === "HorarioHabitual"),
+        )
       } catch (error) {
         console.error("Error cargando períodos laborales:", error)
         setPeriodosLaborales([])
@@ -85,16 +93,22 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
       setLoadingHorarios(true)
       try {
         const fechaStr = fechaSeleccionada.toISOString().split("T")[0]
-        const serviciosIds = servicios.map((s) => s.id)
+        const serviciosIds = detalles.map((d) => d.servicio.id)
 
-        const response = await axios.post<HorarioDisponible[]>("/api/Turnos/horarios-disponibles-empleada", {
+        const response = await axios.post<HorarioBloqueApi[]>("/api/Turnos/horarios-disponibles-empleada", {
           empleadaId: empleado.id,
           fecha: fechaStr,
-          serviciosIds: serviciosIds,
+          servicioIds: serviciosIds,
           sucursalId: sucursal?.id,
         })
 
-        setHorariosDisponibles(response.data)
+        const horas = response.data
+          .filter((bloque) =>
+            bloque.empleadasDisponibles.some((e) => e.id === empleado.id),
+          )
+          .map((bloque) => bloque.fechaHoraInicio.slice(11, 16))
+
+        setHorariosDisponibles(horas)
       } catch (error) {
         console.error("Error cargando horarios disponibles:", error)
         setHorariosDisponibles([])
@@ -119,8 +133,11 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
 
       // Solo mostrar fechas futuras
       if (fecha >= hoy || fecha.toDateString() === hoy.toDateString()) {
-        const diaSemana = fecha.getDay()
-        const periodoLaboral = periodosLaborales.find((p) => p.diaSemana === diaSemana)
+        const diaSemanaNombre = fecha.toLocaleDateString('en-US', { weekday: 'long' })
+        const periodoLaboral = periodosLaborales.find(
+          (p) =>
+            p.diaSemana?.toLowerCase() === diaSemanaNombre.toLowerCase(),
+        )
 
         dias.push({
           fecha,
@@ -135,8 +152,19 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
   }
 
   const diasSemana = generarDiasSemana(semanaActual)
-  const totalDuracion = servicios.reduce((sum, s) => sum + s.duracionMinutos, 0)
-  const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0)
+  const totalDuracion = detalles.reduce(
+    (sum, d) =>
+      sum +
+      d.servicio.duracionMinutos +
+      d.extras.reduce((eSum, e) => eSum + e.duracionMinutos, 0),
+    0,
+  )
+  const totalPrecio = detalles.reduce(
+    (sum, d) =>
+      sum + d.servicio.precio + d.extras.reduce((eSum, e) => eSum + e.precio, 0),
+    0,
+  )
+
 
   const handleSeleccionFecha = (fecha: Date) => {
     setFechaSeleccionada(fecha)
@@ -151,7 +179,10 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
     if (fechaSeleccionada && horaSeleccionada) {
       const fechaStr = fechaSeleccionada.toISOString().split("T")[0]
       const fechaHora = `${fechaStr}T${horaSeleccionada}:00`
-      setFechaHora(fechaHora)
+      fechaSeleccionada.setHours(parseInt(horaSeleccionada.split(":")[0], 10))
+      fechaSeleccionada.setMinutes(parseInt(horaSeleccionada.split(":")[1], 10))
+      
+      setFechaHora(fechaSeleccionada.toJSON())
       navigate("/reserva/confirmar")
     }
   }
@@ -324,13 +355,12 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                       whileTap={{ scale: tieneHorarios ? 0.98 : 1 }}
                     >
                       <Card
-                        className={`cursor-pointer transition-all duration-300 ${
-                          !tieneHorarios
-                            ? "opacity-50 cursor-not-allowed bg-gray-50"
-                            : esSeleccionado
-                              ? "border-2 border-[#8d6e63] bg-[#8d6e63]/5 shadow-md"
-                              : "border border-[#e0d6cf] hover:border-[#d2bfae] hover:shadow-sm"
-                        }`}
+                        className={`cursor-pointer transition-all duration-300 ${!tieneHorarios
+                          ? "opacity-50 cursor-not-allowed bg-gray-50"
+                          : esSeleccionado
+                            ? "border-2 border-[#8d6e63] bg-[#8d6e63]/5 shadow-md"
+                            : "border border-[#e0d6cf] hover:border-[#d2bfae] hover:shadow-sm"
+                          }`}
                         onClick={() => tieneHorarios && handleSeleccionFecha(dia.fecha)}
                       >
                         <CardContent className="p-4 text-center">
@@ -405,38 +435,35 @@ const SeleccionFechaHoraEmpleada: React.FC = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {horariosDisponibles.map((horario) => {
-                        const esSeleccionado = horaSeleccionada === horario.hora
+                      {horariosDisponibles.map((hora, index) => {
+                        const esSeleccionado = horaSeleccionada === hora;
+                        const key = `${hora}-${index}`;
 
                         return (
                           <motion.div
-                            key={horario.hora}
+                            key={key}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.3 }}
-                            whileHover={{ scale: horario.disponible ? 1.05 : 1 }}
-                            whileTap={{ scale: horario.disponible ? 0.95 : 1 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             <Button
                               variant={esSeleccionado ? "default" : "outline"}
-                              className={`w-full h-12 transition-all duration-300 ${
-                                !horario.disponible
-                                  ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
-                                  : esSeleccionado
-                                    ? "bg-[#8d6e63] hover:bg-[#795548] text-white border-[#8d6e63]"
-                                    : "border border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#8d6e63]"
-                              }`}
-                              onClick={() => horario.disponible && handleSeleccionHora(horario.hora)}
-                              disabled={!horario.disponible}
+                              className={`w-full h-12 transition-all duration-300 ${esSeleccionado
+                                  ? "bg-[#8d6e63] hover:bg-[#795548] text-white border-[#8d6e63]"
+                                  : "border border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#8d6e63]"
+                                }`}
+                              onClick={() => handleSeleccionHora(hora)}
                             >
                               <div className="flex flex-col items-center">
-                                <span className="font-medium">{horario.hora}</span>
-                                {!horario.disponible && <span className="text-xs opacity-75">Ocupado</span>}
+                                <span className="font-medium">{hora}</span>
                               </div>
                             </Button>
                           </motion.div>
-                        )
+                        );
                       })}
+
                     </div>
                   )}
 

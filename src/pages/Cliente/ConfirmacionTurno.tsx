@@ -101,9 +101,11 @@ const ConfirmarTurnoCliente: React.FC = () => {
         fechaHora,
         empleadaId: empleado.id,
         clienteId,
+        sucursalId: sucursal.id,
         detalles: detalles.map((d) => ({
           turnoId: 0,
           servicioId: d.servicio.id,
+          extrasIds: d.extras.map((e) => e.id), // También agregamos extrasIds
         })),
       }
 
@@ -140,18 +142,19 @@ const ConfirmarTurnoCliente: React.FC = () => {
 
   const fechaFormateada = fechaHora
     ? new Date(fechaHora).toLocaleDateString("es-ES", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
     : ""
 
   const horaFormateada = fechaHora
     ? new Date(fechaHora).toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    })
     : ""
 
   return (
@@ -328,9 +331,8 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setNombre(e.target.value)
                         if (errors.nombre) setErrors({ ...errors, nombre: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
-                        errors.nombre ? "border-red-500" : ""
-                      }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.nombre ? "border-red-500" : ""
+                        }`}
                     />
                     {errors.nombre && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -350,9 +352,8 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setApellido(e.target.value)
                         if (errors.apellido) setErrors({ ...errors, apellido: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
-                        errors.apellido ? "border-red-500" : ""
-                      }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.apellido ? "border-red-500" : ""
+                        }`}
                     />
                     {errors.apellido && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -366,15 +367,14 @@ const ConfirmarTurnoCliente: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-[#6d4c41] mb-2">Teléfono *</label>
                     <Input
-                      placeholder="Ej: +54 11 1234-5678"
+                      placeholder="Ej: +549 98123123"
                       value={telefono}
                       onChange={(e) => {
                         setTelefono(e.target.value)
                         if (errors.telefono) setErrors({ ...errors, telefono: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
-                        errors.telefono ? "border-red-500" : ""
-                      }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.telefono ? "border-red-500" : ""
+                        }`}
                     />
                     {errors.telefono && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -395,9 +395,8 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setEmail(e.target.value)
                         if (errors.email) setErrors({ ...errors, email: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
-                        errors.email ? "border-red-500" : ""
-                      }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.email ? "border-red-500" : ""
+                        }`}
                     />
                     {errors.email && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -433,9 +432,8 @@ const ConfirmarTurnoCliente: React.FC = () => {
                     <div className="space-y-1">
                       <label
                         htmlFor="terminos"
-                        className={`text-sm font-medium cursor-pointer ${
-                          errors.terminos ? "text-red-500" : "text-[#6d4c41]"
-                        }`}
+                        className={`text-sm font-medium cursor-pointer ${errors.terminos ? "text-red-500" : "text-[#6d4c41]"
+                          }`}
                       >
                         Acepto los términos y condiciones *
                       </label>

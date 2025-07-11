@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Clock,
@@ -19,13 +20,14 @@ import {
   Plus,
   ShoppingCart,
   ArrowRight,
-  Star,
   Sparkles,
   Check,
   X,
   Loader2,
   AlertCircle,
   Building2,
+  Info,
+  Award,
 } from "lucide-react"
 
 interface Extra {
@@ -42,6 +44,8 @@ interface Servicio {
   duracionMinutos: number
   precio: number
   extras?: Extra[]
+  imagenes?: string[]
+  incluye?: string[]
 }
 
 interface Sector {
@@ -59,8 +63,9 @@ const SeleccionServicio: React.FC = () => {
   const [sectorActivo, setSectorActivo] = useState<string>("")
   const [servicioExtras, setServicioExtras] = useState<Servicio | null>(null)
   const [extrasSeleccionados, setExtrasSeleccionados] = useState<Extra[]>([])
+  const [servicioInfo, setServicioInfo] = useState<Servicio | null>(null)
   const navigate = useNavigate()
-  const { agregarDetalle, agregarDetalles, quitarDetalle, sucursal, servicios } = useTurno()
+  const { agregarDetalle, agregarExtra, quitarDetalle, sucursal, servicios, detalles } = useTurno()
 
   useEffect(() => {
     if (!sucursal) {
@@ -89,7 +94,6 @@ const SeleccionServicio: React.FC = () => {
 
   const toggleServicio = (servicio: Servicio) => {
     const yaSeleccionado = servicios.some((s) => s.id === servicio.id)
-
     if (yaSeleccionado) {
       quitarDetalle(servicio.id)
     } else {
@@ -112,15 +116,54 @@ const SeleccionServicio: React.FC = () => {
   }
 
   const confirmarExtras = () => {
-    if (extrasSeleccionados.length > 0) {
-      agregarDetalles(extrasSeleccionados)
+    if (servicioExtras) {
+      extrasSeleccionados.forEach((extra) => {
+        agregarExtra(servicioExtras.id, extra)
+      })
     }
     setServicioExtras(null)
     setExtrasSeleccionados([])
   }
 
-  const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0)
-  const totalDuracion = servicios.reduce((sum, s) => sum + s.duracionMinutos, 0)
+  const mostrarInfoServicio = (servicio: Servicio, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setServicioInfo(servicio)
+  }
+
+  const cerrarInfoServicio = () => {
+    setServicioInfo(null)
+  }
+
+  const agregarServicioDesdeInfo = () => {
+    if (servicioInfo) {
+      const yaSeleccionado = servicios.some((s) => s.id === servicioInfo.id)
+      if (!yaSeleccionado) {
+        agregarDetalle(servicioInfo)
+        if (servicioInfo.extras && servicioInfo.extras.length > 0) {
+          setServicioExtras(servicioInfo)
+          setExtrasSeleccionados([])
+        }
+      }
+      cerrarInfoServicio()
+    }
+  }
+
+  const totalPrecio = detalles.reduce(
+    (sum, d) => sum + d.servicio.precio + d.extras.reduce((eSum, e) => eSum + e.precio, 0),
+    0,
+  )
+
+  const totalDuracion = detalles.reduce(
+    (sum, d) => sum + d.servicio.duracionMinutos + d.extras.reduce((eSum, e) => eSum + e.duracionMinutos, 0),
+    0,
+  )
+
+  // Imágenes placeholder para el carrusel
+  const imagenesPlaceholder = [
+    "/placeholder.svg?height=300&width=400&text=Imagen+1",
+    "/placeholder.svg?height=300&width=400&text=Imagen+2",
+    "/placeholder.svg?height=300&width=400&text=Imagen+3",
+  ]
 
   if (loading) {
     return (
@@ -243,11 +286,9 @@ const SeleccionServicio: React.FC = () => {
                         <h2 className="text-xl font-bold text-[#6d4c41] mb-2">{sector.nombre}</h2>
                         {sector.descripcion && <p className="text-[#8d6e63]">{sector.descripcion}</p>}
                       </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {sector.servicios.map((servicio, index) => {
                           const yaSeleccionado = servicios.some((s) => s.id === servicio.id)
-
                           return (
                             <motion.div
                               key={servicio.id}
@@ -281,17 +322,26 @@ const SeleccionServicio: React.FC = () => {
                                       Extras
                                     </Badge>
                                   )}
+                                  {/* Botón de información */}
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-[#6d4c41] p-2 h-8 w-8"
+                                    onClick={(e) => mostrarInfoServicio(servicio, e)}
+                                  >
+                                    <Info className="h-4 w-4" />
+                                  </Button>
                                 </div>
-
                                 <CardContent className="p-4">
                                   <div className="space-y-3">
                                     <div>
                                       <h3 className="font-semibold text-[#6d4c41] text-lg">{servicio.nombre}</h3>
                                       {servicio.descripcion && (
-                                        <p className="text-sm text-[#8d6e63] mt-1">{servicio.descripcion}</p>
+                                        <p className="text-sm text-[#8d6e63] mt-1 line-clamp-2">
+                                          {servicio.descripcion}
+                                        </p>
                                       )}
                                     </div>
-
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1 text-[#8d6e63]">
@@ -303,13 +353,7 @@ const SeleccionServicio: React.FC = () => {
                                           <span className="text-sm font-medium">${servicio.precio}</span>
                                         </div>
                                       </div>
-                                      <div className="flex items-center gap-1">
-                                        {[...Array(5)].map((_, i) => (
-                                          <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                        ))}
-                                      </div>
                                     </div>
-
                                     <Button
                                       className={`w-full transition-all duration-300 ${
                                         yaSeleccionado
@@ -373,7 +417,6 @@ const SeleccionServicio: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
                 <Button
                   onClick={() => navigate("/reserva/tipo")}
                   className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
@@ -382,7 +425,6 @@ const SeleccionServicio: React.FC = () => {
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
-
               {/* Resumen móvil */}
               <div className="sm:hidden mt-3 pt-3 border-t border-[#e0d6cf] flex justify-between text-sm">
                 <div className="flex items-center gap-1 text-[#8d6e63]">
@@ -408,14 +450,11 @@ const SeleccionServicio: React.FC = () => {
               Extras para {servicioExtras?.nombre}
             </DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4 py-4">
             <p className="text-[#8d6e63] text-sm">Mejorá tu experiencia agregando estos extras opcionales:</p>
-
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {servicioExtras?.extras?.map((extra) => {
                 const yaSeleccionado = extrasSeleccionados.some((e) => e.id === extra.id)
-
                 return (
                   <div
                     key={extra.id}
@@ -441,7 +480,6 @@ const SeleccionServicio: React.FC = () => {
                 )
               })}
             </div>
-
             {extrasSeleccionados.length > 0 && (
               <div className="bg-[#f8f0ec] rounded-lg p-3 border border-[#e0d6cf]">
                 <div className="text-sm text-[#6d4c41] font-medium mb-1">Resumen de extras:</div>
@@ -455,7 +493,6 @@ const SeleccionServicio: React.FC = () => {
               </div>
             )}
           </div>
-
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
@@ -469,6 +506,129 @@ const SeleccionServicio: React.FC = () => {
               <Check className="h-4 w-4 mr-2" />
               Confirmar extras
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de información del servicio */}
+      <Dialog open={!!servicioInfo} onOpenChange={cerrarInfoServicio}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-[#e0d6cf]">
+          <DialogHeader>
+            <DialogTitle className="text-[#6d4c41] text-xl flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-[#a1887f]" />
+              {servicioInfo?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+
+          {servicioInfo && (
+            <div className="space-y-6 py-4">
+              {/* Carrusel de imágenes usando shadcn/ui */}
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {(servicioInfo.imagenes || imagenesPlaceholder).map((imagen, index) => (
+                    <CarouselItem key={index}>
+                      <div className="aspect-video bg-[#f8f0ec] rounded-lg overflow-hidden">
+                        <img
+                          src={imagen || "/placeholder.svg"}
+                          alt={`${servicioInfo.nombre} - Imagen ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+
+              {/* Información básica en cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-[#f8f0ec] border-[#e0d6cf]">
+                  <CardContent className="p-4 text-center">
+                    <Clock className="h-6 w-6 text-[#a1887f] mx-auto mb-2" />
+                    <div className="text-lg font-bold text-[#6d4c41]">{servicioInfo.duracionMinutos}</div>
+                    <div className="text-xs text-[#8d6e63]">minutos</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[#f8f0ec] border-[#e0d6cf]">
+                  <CardContent className="p-4 text-center">
+                    <DollarSign className="h-6 w-6 text-[#a1887f] mx-auto mb-2" />
+                    <div className="text-lg font-bold text-[#6d4c41]">${servicioInfo.precio}</div>
+                    <div className="text-xs text-[#8d6e63]">precio</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Descripción */}
+              {servicioInfo.descripcion && (
+                <div>
+                  <h3 className="text-lg font-semibold text-[#6d4c41] mb-3 flex items-center gap-2">
+                    <Info className="h-5 w-5 text-[#a1887f]" />
+                    Descripción
+                  </h3>
+                  <p className="text-[#8d6e63] leading-relaxed">{servicioInfo.descripcion}</p>
+                </div>
+              )}
+
+              {/* Lo que incluye */}
+              {servicioInfo.incluye && servicioInfo.incluye.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-[#6d4c41] mb-3 flex items-center gap-2">
+                    <Award className="h-5 w-5 text-[#a1887f]" />
+                    Incluye
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {servicioInfo.incluye.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2 text-[#8d6e63]">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span className="text-sm">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Extras disponibles */}
+              {servicioInfo.extras && servicioInfo.extras.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-[#6d4c41] mb-3 flex items-center gap-2">
+                    <Plus className="h-5 w-5 text-[#a1887f]" />
+                    Extras disponibles
+                  </h3>
+                  <div className="space-y-2">
+                    {servicioInfo.extras.map((extra) => (
+                      <div
+                        key={extra.id}
+                        className="flex items-center justify-between p-3 bg-[#f8f0ec] rounded-lg border border-[#e0d6cf]"
+                      >
+                        <div>
+                          <div className="font-medium text-[#6d4c41]">{extra.nombre}</div>
+                          <div className="text-sm text-[#8d6e63]">{extra.duracionMinutos} min adicionales</div>
+                        </div>
+                        <div className="text-[#6d4c41] font-semibold">+${extra.precio}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={cerrarInfoServicio}
+              className="border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] bg-transparent"
+            >
+              Cerrar
+            </Button>
+            {servicioInfo && !servicios.some((s) => s.id === servicioInfo.id) && (
+              <Button onClick={agregarServicioDesdeInfo} className="bg-[#a1887f] hover:bg-[#8d6e63] text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar servicio
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

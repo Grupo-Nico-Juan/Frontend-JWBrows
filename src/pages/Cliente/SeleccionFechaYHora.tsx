@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTurno } from "@/context/TurnoContext"
+import axios from "@/api/AxiosInstance"
 import {
   Calendar,
   Clock,
@@ -21,45 +22,15 @@ import {
   CalendarDays,
 } from "lucide-react"
 
-// Horarios laborales por día de la semana
-const horariosLaborales: Record<string, { inicio: string; fin: string } | null> = {
-  Monday: { inicio: "14:00", fin: "18:00" },
-  Tuesday: { inicio: "10:00", fin: "18:00" },
-  Wednesday: { inicio: "10:00", fin: "18:00" },
-  Thursday: { inicio: "10:00", fin: "18:00" },
-  Friday: { inicio: "10:00", fin: "18:00" },
-  Saturday: { inicio: "10:00", fin: "14:00" },
-  Sunday: null,
-}
-
-// Función para generar franjas horarias
-function generarFranjas(horaInicio: string, horaFin: string): string[] {
-  const franjas: string[] = []
-  const [hi, mi] = horaInicio.split(":").map(Number)
-  const [hf, mf] = horaFin.split(":").map(Number)
-  const start = new Date(0, 0, 0, hi, mi)
-  const end = new Date(0, 0, 0, hf, mf)
-
-  while (start < end) {
-    franjas.push(start.toTimeString().slice(0, 5))
-    start.setMinutes(start.getMinutes() + 30) // Cambié a 30 min para menos opciones
-  }
-
-  return franjas
-}
-
-// Función para simular horarios ocupados (en producción vendría de la API)
-function obtenerHorariosOcupados(fecha: Date): string[] {
-  const ocupados = ["10:00", "14:30", "16:00"] // Simulación
-  return ocupados
-}
-
 const SeleccionFechaHora: React.FC = () => {
   const navigate = useNavigate()
-  const { setFechaHora, sucursal, servicios } = useTurno()
+  const { setFechaHora, sucursal, servicios, detalles } = useTurno()
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("")
   const [semanaActual, setSemanaActual] = useState(0)
+  const [diasConHorario, setDiasConHorario] = useState<Set<string>>(new Set())
+  const [horariosDisponibles, setHorariosDisponibles] = useState<Record<string, string[]>>({})
+  const [loading, setLoading] = useState(false)
 
   // Verificar que tengamos los datos necesarios
   useEffect(() => {
@@ -67,6 +38,21 @@ const SeleccionFechaHora: React.FC = () => {
       navigate("/reserva/servicio")
     }
   }, [sucursal, servicios, navigate])
+
+  // Cargar días con horario laboral
+  useEffect(() => {
+    const cargarDiasConHorario = async () => {
+      if (!sucursal) return
+      try {
+        const response = await axios.get(`/api/PeriodoLaboral/sucursal/${sucursal.id}`)
+        const dias = Object.keys(response.data)
+        setDiasConHorario(new Set(dias))
+      } catch (error) {
+        console.error("Error al cargar dias con horario laboral", error)
+      }
+    }
+    cargarDiasConHorario()
+  }, [sucursal])
 
   // Generar días de la semana actual
   const generarDiasSemana = (offset = 0) => {
@@ -81,30 +67,63 @@ const SeleccionFechaHora: React.FC = () => {
 
       // Solo mostrar fechas futuras
       if (fecha >= hoy || fecha.toDateString() === hoy.toDateString()) {
-        const key = fecha.toLocaleDateString("en-US", { weekday: "long" })
-        const horario = horariosLaborales[key]
-        const horariosOcupados = obtenerHorariosOcupados(fecha)
+        const diaNombre = fecha.toLocaleDateString("en-US", { weekday: "long" })
+        const abierto = diasConHorario.has(diaNombre)
+        const fechaStr = fecha.toISOString().split("T")[0]
+        const horariosDelDia = horariosDisponibles[fechaStr] || []
 
         dias.push({
           fecha,
-          horario,
-          horariosOcupados,
+          abierto,
+          horariosDelDia,
           esHoy: fecha.toDateString() === hoy.toDateString(),
           esPasado: fecha < hoy,
         })
       }
     }
-
     return dias
   }
 
+  // Obtener horarios disponibles para una fecha
+  const fetchHorarios = async (fecha: Date) => {
+    const fechaStr = fecha.toISOString().split("T")[0]
+    setLoading(true)
+
+    try {
+      const response = await axios.post("/api/turnos/horarios-disponibles", {
+        sucursalId: sucursal?.id,
+        servicioIds: servicios.map((s) => s.id),
+        extraIds: detalles.flatMap((d) => d.extras.map((e) => e.id)),
+        fecha: fechaStr,
+      })
+
+      const bloques = response.data
+      const horarios = bloques.map((b: any) => b.fechaHoraInicio.slice(11, 16))
+      setHorariosDisponibles((prev) => ({ ...prev, [fechaStr]: horarios }))
+    } catch (error) {
+      console.error("Error al cargar horarios disponibles", error)
+      setHorariosDisponibles((prev) => ({ ...prev, [fechaStr]: [] }))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const diasSemana = generarDiasSemana(semanaActual)
-  const totalDuracion = servicios.reduce((sum, s) => sum + s.duracionMinutos, 0)
-  const totalPrecio = servicios.reduce((sum, s) => sum + s.precio, 0)
+
+  const totalDuracion = detalles.reduce(
+    (sum, d) => sum + d.servicio.duracionMinutos + d.extras.reduce((eSum, e) => eSum + e.duracionMinutos, 0),
+    0,
+  )
+
+  const totalPrecio = detalles.reduce(
+    (sum, d) => sum + d.servicio.precio + d.extras.reduce((eSum, e) => eSum + e.precio, 0),
+    0,
+  )
 
   const handleSeleccionFecha = (fecha: Date) => {
     setFechaSeleccionada(fecha)
     setHoraSeleccionada("")
+    fetchHorarios(fecha)
   }
 
   const handleSeleccionHora = (hora: string) => {
@@ -155,7 +174,6 @@ const SeleccionFechaHora: React.FC = () => {
                 Seleccioná el momento perfecto para tu cita en <span className="font-medium">{sucursal?.nombre}</span>
               </p>
             </div>
-
             {/* Resumen de servicios */}
             <div className="hidden lg:block">
               <Card className="bg-[#f8f0ec] border-[#e0d6cf]">
@@ -217,17 +235,12 @@ const SeleccionFechaHora: React.FC = () => {
                   </Button>
                 </div>
               </div>
-
               {/* Grid de días */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                 {diasSemana.map((dia, index) => {
                   const esSeleccionado = fechaSeleccionada?.toDateString() === dia.fecha.toDateString()
-                  const tieneHorarios = dia.horario !== null
-                  const horariosDisponibles = dia.horario
-                    ? generarFranjas(dia.horario.inicio, dia.horario.fin).filter(
-                        (hora) => !dia.horariosOcupados.includes(hora),
-                      ).length
-                    : 0
+                  const tieneHorarios = dia.abierto
+                  const horariosDisponiblesCount = dia.horariosDelDia.length
 
                   return (
                     <motion.div
@@ -257,13 +270,13 @@ const SeleccionFechaHora: React.FC = () => {
                             <div className="text-xs text-[#8d6e63]">
                               {dia.fecha.toLocaleDateString("es-ES", { month: "short" })}
                             </div>
-
                             {dia.esHoy && <Badge className="bg-[#a1887f] text-white text-xs">Hoy</Badge>}
-
                             {tieneHorarios ? (
                               <div className="text-xs text-green-600 flex items-center justify-center gap-1">
                                 <CheckCircle className="h-3 w-3" />
-                                {horariosDisponibles} disponibles
+                                {horariosDisponiblesCount > 0
+                                  ? `${horariosDisponiblesCount} disponibles`
+                                  : "Disponible"}
                               </div>
                             ) : (
                               <div className="text-xs text-red-500 flex items-center justify-center gap-1">
@@ -284,7 +297,7 @@ const SeleccionFechaHora: React.FC = () => {
 
         {/* Selector de horarios */}
         <AnimatePresence>
-          {fechaSeleccionada && diaSeleccionado?.horario && (
+          {fechaSeleccionada && diaSeleccionado?.abierto && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -307,41 +320,50 @@ const SeleccionFechaHora: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {generarFranjas(diaSeleccionado.horario.inicio, diaSeleccionado.horario.fin).map((hora) => {
-                      const estaOcupado = diaSeleccionado.horariosOcupados.includes(hora)
-                      const esSeleccionado = horaSeleccionada === hora
+                  {loading ? (
+                    <div className="flex justify-center items-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#a1887f]"></div>
+                      <span className="ml-2 text-[#8d6e63]">Cargando horarios...</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {(horariosDisponibles[fechaSeleccionada.toISOString().split("T")[0]] || []).map((hora) => {
+                        const esSeleccionado = horaSeleccionada === hora
 
-                      return (
-                        <motion.div
-                          key={hora}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.3 }}
-                          whileHover={{ scale: !estaOcupado ? 1.05 : 1 }}
-                          whileTap={{ scale: !estaOcupado ? 0.95 : 1 }}
-                        >
-                          <Button
-                            variant={esSeleccionado ? "default" : "outline"}
-                            className={`w-full h-12 transition-all duration-300 ${
-                              estaOcupado
-                                ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
-                                : esSeleccionado
+                        return (
+                          <motion.div
+                            key={hora}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Button
+                              variant={esSeleccionado ? "default" : "outline"}
+                              className={`w-full h-12 transition-all duration-300 ${
+                                esSeleccionado
                                   ? "bg-[#a1887f] hover:bg-[#8d6e63] text-white border-[#a1887f]"
                                   : "border-[#d2bfae] text-[#6d4c41] hover:bg-[#f8f0ec] hover:border-[#a1887f]"
-                            }`}
-                            onClick={() => !estaOcupado && handleSeleccionHora(hora)}
-                            disabled={estaOcupado}
-                          >
-                            <div className="flex flex-col items-center">
-                              <span className="font-medium">{hora}</span>
-                              {estaOcupado && <span className="text-xs opacity-75">Ocupado</span>}
-                            </div>
-                          </Button>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
+                              }`}
+                              onClick={() => handleSeleccionHora(hora)}
+                            >
+                              <div className="flex flex-col items-center">
+                                <span className="font-medium">{hora}</span>
+                              </div>
+                            </Button>
+                          </motion.div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {!loading && horariosDisponibles[fechaSeleccionada.toISOString().split("T")[0]]?.length === 0 && (
+                    <div className="text-center py-8">
+                      <AlertCircle className="h-12 w-12 text-[#8d6e63] mx-auto mb-2" />
+                      <p className="text-[#8d6e63]">No hay horarios disponibles para esta fecha</p>
+                    </div>
+                  )}
 
                   {/* Información adicional */}
                   <div className="mt-6 p-4 bg-[#f8f0ec] rounded-lg border border-[#e0d6cf]">
@@ -395,7 +417,6 @@ const SeleccionFechaHora: React.FC = () => {
                         <p>⏱️ Duración: {totalDuracion} minutos</p>
                       </div>
                     </div>
-
                     <Button onClick={handleConfirmar} className="bg-white text-[#a1887f] hover:bg-white/90 font-medium">
                       Continuar
                       <ArrowRight className="h-4 w-4 ml-2" />

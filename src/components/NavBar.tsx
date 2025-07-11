@@ -76,11 +76,17 @@ export const NavBar: React.FC = () => {
         icon: IconCalendarCheck,
         description: "Programación de citas",
       },
+      {
+        title: "Turnos Diarios",
+        path: "/empleadas",
+        icon: IconCalendarCheck,
+        description: "Turnos Diarios por empleada",
+      },
     ],
     configuracion: [
       {
         title: "Períodos Laborales",
-        path: "/periodos-laborales",
+        path: "/periodos-laborales/nuevo",
         icon: IconClock,
         description: "Horarios de trabajo",
       },
@@ -116,6 +122,12 @@ export const NavBar: React.FC = () => {
         icon: IconGauge,
         description: "Métricas y análisis",
       },
+      {
+        title: "Calendario de Turnos",
+        path: "/calendario-admin",
+        icon: IconCalendarCheck,
+        description: "Visualización de turnos",
+      }
     ],
   }
 
