@@ -122,6 +122,12 @@ export const NavBar: React.FC = () => {
         icon: IconGauge,
         description: "Métricas y análisis",
       },
+      {
+        title: "Calendario de Turnos",
+        path: "/calendario-admin",
+        icon: IconCalendarCheck,
+        description: "Visualización de turnos",
+      }
     ],
   }
 
