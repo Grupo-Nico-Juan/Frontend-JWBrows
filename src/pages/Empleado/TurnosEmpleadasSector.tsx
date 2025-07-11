@@ -21,6 +21,17 @@ import {
   RefreshCw,
   Check,
 } from "lucide-react"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface Empleada {
   id: number
@@ -74,6 +85,10 @@ const TurnosEmpleadasSector: React.FC = () => {
   const [loadingTurnos, setLoadingTurnos] = useState(false)
   const [processingTurno, setProcessingTurno] = useState<number | null>(null)
   const [error, setError] = useState<string>("")
+  const [showPinDialog, setShowPinDialog] = useState(false)
+  const [selectedTurnoId, setSelectedTurnoId] = useState<number | null>(null)
+  const [pin, setPin] = useState("")
+  const [pinError, setPinError] = useState("")
 
   // Cargar empleadas del sector
   useEffect(() => {
@@ -178,23 +193,63 @@ const TurnosEmpleadasSector: React.FC = () => {
   }
 
   const marcarTurnoRealizado = async (turnoId: number) => {
-    setProcessingTurno(turnoId)
+    setSelectedTurnoId(turnoId)
+    setShowPinDialog(true)
+    setPin("")
+    setPinError("")
+  }
+
+  const confirmarTurnoRealizado = async () => {
+    if (!pin.trim()) {
+      setPinError("El PIN es requerido")
+      return
+    }
+
+    if (!selectedTurnoId) return
+
+    setProcessingTurno(selectedTurnoId)
     try {
-      console.log(turnoId);
-      // Llamada al endpoint para marcar el turno como realizado
-      await axios.put(`/api/Turnos/${turnoId}/marcar-realizado`)
+      // Llamada al endpoint para marcar el turno como realizado con PIN
+      await axios.put(`/api/Turnos/${selectedTurnoId}/marcar-realizado`, {
+        pin: pin.trim(),
+      })
 
       // Actualizar el estado local
       setTurnos((prevTurnos) =>
-        prevTurnos.map((turno) => (turno.id === turnoId ? { ...turno, realizado: true } : turno)),
+        prevTurnos.map((turno) => (turno.id === selectedTurnoId ? { ...turno, realizado: true } : turno)),
       )
 
-     
-    } catch (err) {
+      // Cerrar el diálogo y limpiar estados
+      setShowPinDialog(false)
+      setSelectedTurnoId(null)
+      setPin("")
+      setPinError("")
+
+      toast.success("Turno marcado como realizado", {
+        description: "El turno se ha completado exitosamente",
+      })
+    } catch (err: any) {
       console.error("Error marcando turno como realizado", err)
+
+      // Manejar errores específicos del PIN
+      if (err.response?.status === 400 || err.response?.status === 401) {
+        setPinError("PIN incorrecto. Intente nuevamente.")
+      } else {
+        setPinError("Error al procesar la solicitud")
+        toast.error("Error", {
+          description: "No se pudo marcar el turno como realizado",
+        })
+      }
     } finally {
       setProcessingTurno(null)
     }
+  }
+
+  const cancelarPinDialog = () => {
+    setShowPinDialog(false)
+    setSelectedTurnoId(null)
+    setPin("")
+    setPinError("")
   }
 
   const refreshTurnos = () => {
@@ -252,7 +307,7 @@ const TurnosEmpleadasSector: React.FC = () => {
   if (!sucursalId || !sectorId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] flex items-center justify-center p-4">
-        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf] max-w-md w-full ">
+        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf] max-w-md w-full">
           <div className="text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
             <div>
@@ -442,7 +497,7 @@ const TurnosEmpleadasSector: React.FC = () => {
                           .map((turno, index) => (
                             <motion.div
                               key={turno.id}
-                              initial={{ opacity: 0, y: 20 }}
+                              initial={{ opacity: 1, y: 0 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -20 }}
                               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -531,7 +586,7 @@ const TurnosEmpleadasSector: React.FC = () => {
                                         ${getTotalPrecio(turno.detalles)}
                                       </p>
 
-                                      {/* Botón para marcar como realizado */}
+                                      {/* Botón para marcar como realizado - solo aparece si NO está realizado */}
                                       {!turno.realizado && (
                                         <Button
                                           onClick={() => marcarTurnoRealizado(turno.id)}
@@ -573,6 +628,75 @@ const TurnosEmpleadasSector: React.FC = () => {
             )}
           </motion.div>
         </div>
+        {/* Diálogo de confirmación con PIN */}
+        <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-[#6d4c41]">Confirmar realización del turno</DialogTitle>
+              <DialogDescription className="text-[#8d6e63]">
+                Ingrese el PIN de confirmación para marcar este turno como realizado.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="pin" className="text-[#6d4c41]">
+                  PIN de confirmación
+                </Label>
+                <Input
+                  id="pin"
+                  type="password"
+                  placeholder="Ingrese el PIN"
+                  value={pin}
+                  onChange={(e) => {
+                    setPin(e.target.value)
+                    if (pinError) setPinError("")
+                  }}
+                  className={`${
+                    pinError ? "border-red-500 focus:border-red-500" : "border-[#e0d6cf] focus:border-[#a1887f]"
+                  }`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && pin.trim()) {
+                      confirmarTurnoRealizado()
+                    }
+                  }}
+                />
+                {pinError && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {pinError}
+                  </p>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={cancelarPinDialog}
+                className="border-[#e0d6cf] text-[#6d4c41] hover:bg-[#f8f0ec] bg-transparent"
+                disabled={processingTurno !== null}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmarTurnoRealizado}
+                disabled={!pin.trim() || processingTurno !== null}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {processingTurno === selectedTurnoId ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Confirmando...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Confirmar
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
