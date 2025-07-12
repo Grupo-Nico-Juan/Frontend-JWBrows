@@ -132,9 +132,11 @@ const SeleccionFechaHora: React.FC = () => {
 
   const handleConfirmar = () => {
     if (fechaSeleccionada && horaSeleccionada) {
-      const fechaStr = fechaSeleccionada.toISOString().split("T")[0]
-      const fechaHora = `${fechaStr}T${horaSeleccionada}:00`
-      setFechaHora(fechaHora)
+      const [hora, minuto] = horaSeleccionada.split(":")
+      const fecha = new Date(fechaSeleccionada)
+      fecha.setHours(parseInt(hora, 10))
+      fecha.setMinutes(parseInt(minuto, 10))
+      setFechaHora(fecha.toJSON())
       navigate("/reserva/empleado")
     }
   }
