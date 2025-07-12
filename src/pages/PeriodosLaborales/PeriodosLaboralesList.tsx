@@ -132,7 +132,11 @@ const PeriodosLaboralesList: React.FC = () => {
 
   const formatearHora = (hora: string) => {
     if (!hora) return "-"
-    return hora.substring(0, 5) // Formato HH:MM
+    const fecha = new Date(`1970-01-01T${hora}`)
+    return fecha.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   }
 
   return (
