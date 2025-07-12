@@ -422,10 +422,9 @@ const AsignarTurno: React.FC = () => {
 
     try {
       const fechaHoraStr = `${date.toISOString().split("T")[0]}T${time}:00`
-      const fechaHoraIso = new Date(fechaHoraStr).toJSON()
 
       const turnoData = {
-        fechaHora: fechaHoraIso,
+        fechaHora: fechaHoraStr,
         empleadaId: formData.empleadaId,
         clienteId: formData.clienteId,
         sucursalId: formData.sucursalId,

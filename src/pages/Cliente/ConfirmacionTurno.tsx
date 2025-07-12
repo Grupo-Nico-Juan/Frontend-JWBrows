@@ -153,7 +153,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
     ? new Date(fechaHora).toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     })
     : ""
 
