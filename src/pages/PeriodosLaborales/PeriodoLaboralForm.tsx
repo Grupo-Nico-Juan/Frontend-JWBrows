@@ -116,6 +116,7 @@ const PeriodoLaboralForm: React.FC = () => {
     setIsLoading(true)
 
     const dataToSend = {
+      ...(editando && id ? { id: Number(id) } : {}),
       empleadaId: form.empleadaId,
       tipo: form.tipo,
       diaSemana: form.tipo === "HorarioHabitual" ? form.diaSemana : null,
