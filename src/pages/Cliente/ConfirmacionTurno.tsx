@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -9,6 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTurno } from "@/context/TurnoContext"
@@ -26,6 +34,8 @@ import {
   ArrowLeft,
   Star,
   CreditCard,
+  MessageCircle,
+  Smartphone,
 } from "lucide-react"
 
 const ConfirmarTurnoCliente: React.FC = () => {
@@ -39,12 +49,20 @@ const ConfirmarTurnoCliente: React.FC = () => {
   const [aceptaNotificaciones, setAceptaNotificaciones] = useState(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Estados para validación WhatsApp
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false)
+  const [codigoWhatsApp, setCodigoWhatsApp] = useState("")
+  const [codigoError, setCodigoError] = useState("")
+  const [enviandoCodigo, setEnviandoCodigo] = useState(false)
+  const [confirmandoCodigo, setConfirmandoCodigo] = useState(false)
+  const [clienteId, setClienteId] = useState<number | null>(null)
+  const [codigoEnviado, setCodigoEnviado] = useState(false)
+
   const { sucursal, detalles, fechaHora, empleado, resetTurno } = useTurno()
 
   // Validaciones
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-
     if (!nombre.trim()) newErrors.nombre = "El nombre es requerido"
     if (!apellido.trim()) newErrors.apellido = "El apellido es requerido"
     if (!telefono.trim()) {
@@ -58,12 +76,12 @@ const ConfirmarTurnoCliente: React.FC = () => {
     if (!aceptaTerminos) {
       newErrors.terminos = "Debes aceptar los términos y condiciones"
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async () => {
+  // Función para iniciar el proceso de validación
+  const iniciarValidacionWhatsApp = async () => {
     if (!validateForm()) {
       toast.error("Por favor, corrige los errores en el formulario")
       return
@@ -75,13 +93,12 @@ const ConfirmarTurnoCliente: React.FC = () => {
     }
 
     setLoading(true)
-
     try {
-      // 1. Verificar si el cliente ya existe
-      let clienteId: number
+      // 1. Verificar si el cliente ya existe o crearlo
+      let clienteIdTemp: number
       try {
         const res = await axios.get(`/api/Cliente/telefono/${telefono}`)
-        clienteId = res.data.id
+        clienteIdTemp = res.data.id
       } catch (err: any) {
         if (err.response?.status === 404) {
           const res = await axios.post("/api/Cliente/registrar-sin-cuenta", {
@@ -90,33 +107,112 @@ const ConfirmarTurnoCliente: React.FC = () => {
             telefono,
             email: email || undefined,
           })
-          clienteId = res.data.id
+          clienteIdTemp = res.data.id
         } else {
           throw err
         }
       }
 
-      // 2. Preparar el body del turno
+      setClienteId(clienteIdTemp)
+      setShowWhatsAppDialog(true)
+
+      // 2. Enviar código de verificación automáticamente
+      await enviarCodigoWhatsApp(clienteIdTemp)
+    } catch (err: any) {
+      console.error("Error al preparar validación:", err.response?.data)
+      toast.error("Error al preparar la validación. Por favor, intenta nuevamente.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Enviar código de verificación por WhatsApp
+  const enviarCodigoWhatsApp = async (clienteIdParam?: number) => {
+    const idCliente = clienteIdParam || clienteId
+    if (!idCliente) return
+
+    setEnviandoCodigo(true)
+    setCodigoError("")
+
+    try {
+      await axios.post("/api/WhatsApp/verificar", {
+        telefonoDestino: telefono,
+        nombreCliente: nombre,
+        clienteId: idCliente,
+      })
+
+      setCodigoEnviado(true)
+      toast.success("Código de verificación enviado por WhatsApp")
+    } catch (err: any) {
+      console.error("Error al enviar código:", err.response?.data)
+      setCodigoError("Error al enviar el código. Verifica tu número de teléfono.")
+      toast.error("Error al enviar el código de verificación")
+    } finally {
+      setEnviandoCodigo(false)
+    }
+  }
+
+  // Confirmar código de verificación
+  const confirmarCodigoWhatsApp = async () => {
+    if (!codigoWhatsApp.trim()) {
+      setCodigoError("Ingresa el código de verificación")
+      return
+    }
+
+    if (!clienteId) {
+      setCodigoError("Error interno. Por favor, intenta nuevamente.")
+      return
+    }
+
+    setConfirmandoCodigo(true)
+    setCodigoError("")
+
+    try {
+      await axios.post("/api/WhatsApp/confirmar", {
+        clienteId: clienteId,
+        codigo: codigoWhatsApp,
+      })
+
+      toast.success("Teléfono verificado correctamente")
+      setShowWhatsAppDialog(false)
+
+      // Proceder con la creación del turno
+      await crearTurno()
+    } catch (err: any) {
+      console.error("Error al confirmar código:", err.response?.data)
+      if (err.response?.status === 400) {
+        setCodigoError("Código incorrecto. Verifica e intenta nuevamente.")
+      } else {
+        setCodigoError("Error al verificar el código. Intenta nuevamente.")
+      }
+    } finally {
+      setConfirmandoCodigo(false)
+    }
+  }
+
+  // Crear el turno después de la validación
+  const crearTurno = async () => {
+    if (!clienteId) return
+
+    setLoading(true)
+    try {
       const body = {
         fechaHora,
-        empleadaId: empleado.id,
+        empleadaId: empleado!.id,
         clienteId,
-        sucursalId: sucursal.id,
+        sucursalId: sucursal!.id,
         detalles: detalles.map((d) => ({
           turnoId: 0,
           servicioId: d.servicio.id,
-          extrasIds: d.extras.map((e) => e.id), // También agregamos extrasIds
+          extrasIds: d.extras.map((e) => e.id),
         })),
       }
 
       console.log("📤 Body del POST /api/Turnos:", body)
-
-      // 3. Enviar el turno
       await axios.post("/api/Turnos", body)
 
       toast.success("¡Turno agendado con éxito!")
 
-      // Mostrar confirmación y luego navegar
       setTimeout(() => {
         resetTurno()
         navigate("/")
@@ -127,6 +223,15 @@ const ConfirmarTurnoCliente: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Cancelar diálogo de WhatsApp
+  const cancelarDialogoWhatsApp = () => {
+    setShowWhatsAppDialog(false)
+    setCodigoWhatsApp("")
+    setCodigoError("")
+    setCodigoEnviado(false)
+    setClienteId(null)
   }
 
   // Calcular totales
@@ -142,18 +247,18 @@ const ConfirmarTurnoCliente: React.FC = () => {
 
   const fechaFormateada = fechaHora
     ? new Date(fechaHora).toLocaleDateString("es-ES", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
     : ""
 
   const horaFormateada = fechaHora
     ? new Date(fechaHora).toLocaleTimeString("es-ES", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : ""
 
   return (
@@ -175,7 +280,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
               <h1 className="text-2xl lg:text-3xl font-bold text-[#6d4c41] mb-2">Confirmar tu cita</h1>
               <p className="text-[#8d6e63]">Revisá los detalles y completá tus datos para finalizar la reserva</p>
             </div>
-
             <Button
               variant="outline"
               onClick={() => navigate("/reserva/empleado")}
@@ -205,7 +309,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                   <Calendar className="h-5 w-5" />
                   Resumen de tu cita
                 </h2>
-
                 <div className="space-y-4">
                   {/* Fecha y hora */}
                   <div className="flex items-center gap-3 p-3 bg-[#f8f0ec] rounded-lg">
@@ -215,7 +318,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                       <p className="text-sm text-[#8d6e63]">{horaFormateada} hs</p>
                     </div>
                   </div>
-
                   {/* Sucursal */}
                   <div className="flex items-center gap-3 p-3 bg-[#f8f0ec] rounded-lg">
                     <MapPin className="h-5 w-5 text-[#a1887f]" />
@@ -224,7 +326,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                       <p className="text-sm text-[#8d6e63]">{sucursal?.direccion}</p>
                     </div>
                   </div>
-
                   {/* Profesional */}
                   <div className="flex items-center gap-3 p-3 bg-[#f8f0ec] rounded-lg">
                     <User className="h-5 w-5 text-[#a1887f]" />
@@ -249,7 +350,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                   <Sparkles className="h-5 w-5" />
                   Servicios seleccionados
                 </h3>
-
                 <div className="space-y-3">
                   {detalles.map((detalle, index) => (
                     <motion.div
@@ -266,7 +366,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                           <p className="text-sm text-[#8d6e63]">{detalle.servicio.duracionMinutos}min</p>
                         </div>
                       </div>
-
                       {detalle.extras.length > 0 && (
                         <div className="mt-3 pt-3 border-t border-[#e0d6cf]">
                           <p className="text-sm font-medium text-[#8d6e63] mb-2">Extras:</p>
@@ -283,9 +382,7 @@ const ConfirmarTurnoCliente: React.FC = () => {
                     </motion.div>
                   ))}
                 </div>
-
                 <Separator className="my-4" />
-
                 {/* Totales */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-[#8d6e63]">
@@ -318,7 +415,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                   <User className="h-5 w-5" />
                   Tus datos
                 </h2>
-
                 <div className="space-y-4">
                   {/* Nombre */}
                   <div>
@@ -330,8 +426,9 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setNombre(e.target.value)
                         if (errors.nombre) setErrors({ ...errors, nombre: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.nombre ? "border-red-500" : ""
-                        }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
+                        errors.nombre ? "border-red-500" : ""
+                      }`}
                     />
                     {errors.nombre && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -340,7 +437,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                       </p>
                     )}
                   </div>
-
                   {/* Apellido */}
                   <div>
                     <label className="block text-sm font-medium text-[#6d4c41] mb-2">Apellido *</label>
@@ -351,8 +447,9 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setApellido(e.target.value)
                         if (errors.apellido) setErrors({ ...errors, apellido: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.apellido ? "border-red-500" : ""
-                        }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
+                        errors.apellido ? "border-red-500" : ""
+                      }`}
                     />
                     {errors.apellido && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -361,7 +458,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                       </p>
                     )}
                   </div>
-
                   {/* Teléfono */}
                   <div>
                     <label className="block text-sm font-medium text-[#6d4c41] mb-2">Teléfono *</label>
@@ -372,8 +468,9 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setTelefono(e.target.value)
                         if (errors.telefono) setErrors({ ...errors, telefono: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.telefono ? "border-red-500" : ""
-                        }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
+                        errors.telefono ? "border-red-500" : ""
+                      }`}
                     />
                     {errors.telefono && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -381,8 +478,11 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         {errors.telefono}
                       </p>
                     )}
+                    <p className="text-xs text-[#8d6e63] mt-1 flex items-center gap-1">
+                      <MessageCircle className="h-3 w-3" />
+                      Verificaremos tu número por WhatsApp
+                    </p>
                   </div>
-
                   {/* Email (opcional) */}
                   <div>
                     <label className="block text-sm font-medium text-[#6d4c41] mb-2">Email (opcional)</label>
@@ -394,8 +494,9 @@ const ConfirmarTurnoCliente: React.FC = () => {
                         setEmail(e.target.value)
                         if (errors.email) setErrors({ ...errors, email: "" })
                       }}
-                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${errors.email ? "border-red-500" : ""
-                        }`}
+                      className={`border-[#d2bfae] focus:ring-[#a1887f] focus:border-[#a1887f] ${
+                        errors.email ? "border-red-500" : ""
+                      }`}
                     />
                     {errors.email && (
                       <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -416,7 +517,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                   <Shield className="h-5 w-5" />
                   Términos y condiciones
                 </h3>
-
                 <div className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <Checkbox
@@ -431,8 +531,9 @@ const ConfirmarTurnoCliente: React.FC = () => {
                     <div className="space-y-1">
                       <label
                         htmlFor="terminos"
-                        className={`text-sm font-medium cursor-pointer ${errors.terminos ? "text-red-500" : "text-[#6d4c41]"
-                          }`}
+                        className={`text-sm font-medium cursor-pointer ${
+                          errors.terminos ? "text-red-500" : "text-[#6d4c41]"
+                        }`}
                       >
                         Acepto los términos y condiciones *
                       </label>
@@ -441,7 +542,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                       </p>
                     </div>
                   </div>
-
                   <div className="flex items-start space-x-3">
                     <Checkbox
                       id="notificaciones"
@@ -456,7 +556,6 @@ const ConfirmarTurnoCliente: React.FC = () => {
                       <p className="text-xs text-[#8d6e63]">Te enviaremos un recordatorio 24hs antes de tu cita</p>
                     </div>
                   </div>
-
                   {errors.terminos && (
                     <p className="text-red-500 text-sm flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
@@ -489,18 +588,18 @@ const ConfirmarTurnoCliente: React.FC = () => {
             <AnimatePresence>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <Button
-                  onClick={handleSubmit}
+                  onClick={iniciarValidacionWhatsApp}
                   disabled={loading}
                   className="w-full bg-[#a1887f] hover:bg-[#8d6e63] text-white h-12 text-lg font-medium"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Confirmando tu cita...
+                      Preparando validación...
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="h-5 w-5 mr-2" />
+                      <MessageCircle className="h-5 w-5 mr-2" />
                       Confirmar cita - ${totalPrecio}
                     </>
                   )}
@@ -523,8 +622,138 @@ const ConfirmarTurnoCliente: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Diálogo de verificación WhatsApp */}
+      <Dialog open={showWhatsAppDialog} onOpenChange={setShowWhatsAppDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#6d4c41] flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Verificar número de WhatsApp
+            </DialogTitle>
+            <DialogDescription className="text-[#8d6e63]">
+              {!codigoEnviado
+                ? "Enviaremos un código de verificación a tu WhatsApp para confirmar tu número."
+                : `Ingresa el código de 6 dígitos que enviamos a ${telefono}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {!codigoEnviado ? (
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <MessageCircle className="h-8 w-8 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-[#6d4c41]">Número a verificar:</p>
+                  <p className="text-lg font-bold text-[#8d6e63]">{telefono}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="codigo" className="text-[#6d4c41]">
+                  Código de verificación
+                </Label>
+                <Input
+                  id="codigo"
+                  type="text"
+                  placeholder="123456"
+                  value={codigoWhatsApp}
+                  onChange={(e) => {
+                    setCodigoWhatsApp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    if (codigoError) setCodigoError("")
+                  }}
+                  className={`text-center text-lg tracking-widest ${
+                    codigoError ? "border-red-500 focus:border-red-500" : "border-[#e0d6cf] focus:border-[#a1887f]"
+                  }`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && codigoWhatsApp.length === 6) {
+                      confirmarCodigoWhatsApp()
+                    }
+                  }}
+                  maxLength={6}
+                />
+                {codigoError && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {codigoError}
+                  </p>
+                )}
+                <div className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => enviarCodigoWhatsApp()}
+                    disabled={enviandoCodigo}
+                    className="text-[#a1887f] hover:text-[#8d6e63] text-sm"
+                  >
+                    {enviandoCodigo ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Reenviar código"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={cancelarDialogoWhatsApp}
+              className="border-[#e0d6cf] text-[#6d4c41] hover:bg-[#f8f0ec] bg-transparent"
+              disabled={enviandoCodigo || confirmandoCodigo}
+            >
+              Cancelar
+            </Button>
+
+            {!codigoEnviado ? (
+              <Button
+                onClick={() => enviarCodigoWhatsApp()}
+                disabled={enviandoCodigo}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {enviandoCodigo ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Enviar código
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={confirmarCodigoWhatsApp}
+                disabled={codigoWhatsApp.length !== 6 || confirmandoCodigo}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {confirmandoCodigo ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Verificar código
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
 export default ConfirmarTurnoCliente
+
