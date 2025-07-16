@@ -1,4 +1,5 @@
 "use client"
+
 import { useEffect, useState, useMemo } from "react"
 import axios from "@/api/AxiosInstance"
 import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfDay } from "date-fns"
@@ -51,7 +52,7 @@ interface TurnoCalendarioDTO {
 interface PeriodoLaboralDTO {
   id: number
   empleadaId: number
-  tipo: string
+  tipo: "HorarioHabitual" | "Licencia"
   diaSemana: string
   horaInicio: string
   horaFin: string
@@ -102,31 +103,25 @@ const getEstadoIcon = (estado: string) => {
   }
 }
 
-// Mapeo de días en inglés a números (0=domingo, 1=lunes, etc.)
-const dayNameToNumber: Record<string, number> = {
-  Sunday: 0,
-  Monday: 1,
-  Tuesday: 2,
-  Wednesday: 3,
-  Thursday: 4,
-  Friday: 5,
-  Saturday: 6,
-}
-
 type VistaCalendario = "semana" | "dia"
 
 // Hook para detectar tamaño de pantalla
 const useScreenSize = () => {
-  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 })
+  const [screenSize, setScreenSize] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
+    height: typeof window !== "undefined" ? window.innerHeight : 768,
+  })
 
   useEffect(() => {
-    const updateScreenSize = () => {
-      setScreenSize({ width: window.innerWidth, height: window.innerHeight })
+    const handleResize = () => {
+      setScreenSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
     }
 
-    updateScreenSize()
-    window.addEventListener("resize", updateScreenSize)
-    return () => window.removeEventListener("resize", updateScreenSize)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   return screenSize
@@ -148,16 +143,17 @@ export default function CalendarioTurnosAdmin() {
   const [periodosLaborales, setPeriodosLaborales] = useState<PeriodosLaboralesPorDia | null>(null)
 
   const screenSize = useScreenSize()
-  const isMobile = screenSize.width < 768
-  const isVerySmall = screenSize.width < 640
+  const isMobile = screenSize.width < 640
+  const isTablet = screenSize.width < 768
 
-  // Forzar vista día en pantallas muy pequeñas
+  // Forzar vista de día en pantallas muy pequeñas
   useEffect(() => {
-    if (isVerySmall && vista === "semana") {
+    if (isMobile && vista === "semana") {
       setVista("dia")
     }
-  }, [isVerySmall, vista])
+  }, [isMobile, vista])
 
+  // Cargar sucursales al inicio
   useEffect(() => {
     const fetchSucursales = async () => {
       try {
@@ -169,17 +165,36 @@ export default function CalendarioTurnosAdmin() {
         }
       } catch (error) {
         console.error("Error al cargar sucursales:", error)
-        setError("Error al cargar las sucursales")
+        setError("Error al cargar sucursales")
       }
     }
-
     fetchSucursales()
   }, [])
 
+  // Cargar períodos laborales cuando cambia la sucursal
   useEffect(() => {
-    if (!sucursalFiltro) return
+    const fetchPeriodosLaborales = async () => {
+      if (!sucursalFiltro) return
 
-    const fetchData = async () => {
+      try {
+        const res = await axios.get<PeriodosLaboralesPorDia>(`/api/PeriodoLaboral/sucursal/${sucursalFiltro}`)
+        setPeriodosLaborales(res.data)
+      } catch (error) {
+        console.error("Error al cargar períodos laborales:", error)
+        setPeriodosLaborales(null)
+      }
+    }
+    fetchPeriodosLaborales()
+  }, [sucursalFiltro])
+
+  // Calcular rango de fechas según la vista
+  useEffect(() => {
+    const fetchTurnos = async () => {
+      if (!sucursalFiltro) {
+        setIsLoading(false)
+        return
+      }
+
       try {
         setIsLoading(true)
         setError("")
@@ -191,7 +206,6 @@ export default function CalendarioTurnosAdmin() {
 
         // Calcular rango de fechas dentro del useEffect
         let fechaInicio: Date, fechaFin: Date
-
         if (vista === "semana") {
           fechaInicio = startOfWeek(fechaActual, { weekStartsOn: 1 })
           fechaFin = endOfWeek(fechaActual, { weekStartsOn: 1 })
@@ -206,29 +220,23 @@ export default function CalendarioTurnosAdmin() {
         params.fechaInicio = format(fechaInicio, "yyyy-MM-dd'T00:00:00'")
         params.fechaFin = format(fechaFin, "yyyy-MM-dd'T23:59:59'")
 
-        // Cargar turnos y períodos laborales en paralelo
-        const [turnosRes, periodosRes] = await Promise.all([
-          axios.get<TurnoCalendarioDTO[]>("/api/Turnos/filtrar", { params }),
-          axios.get<PeriodosLaboralesPorDia>(`/api/PeriodoLaboral/sucursal/${sucursalFiltro}`),
-        ])
-
-        setTurnos(turnosRes.data)
-        setPeriodosLaborales(periodosRes.data)
+        const res = await axios.get<TurnoCalendarioDTO[]>("/api/Turnos/filtrar", { params })
+        setTurnos(res.data)
 
         const empleadasUnicas = Array.from(
-          new Map(turnosRes.data.map((t) => [t.empleadaId, t.empleadaNombre])).entries(),
+          new Map(res.data.map((t) => [t.empleadaId, t.empleadaNombre])).entries(),
         ).map(([id, nombre]) => ({ id, nombre }))
 
         setEmpleadas([{ id: -1, nombre: "Todos" }, ...empleadasUnicas])
       } catch (error) {
-        console.error("Error al cargar los datos:", error)
-        setError("Error al cargar los datos del calendario")
+        console.error("Error al cargar los turnos:", error)
+        setError("Error al cargar los turnos")
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchData()
+    fetchTurnos()
   }, [estadoFiltro, empleadaFiltro, sucursalFiltro, fechaActual, vista])
 
   // Navegación
@@ -259,29 +267,64 @@ export default function CalendarioTurnosAdmin() {
     })
   }, [fechaActual])
 
-  // Verificar si una hora está en horario laboral para un día
-  const esHorarioLaboral = (dia: Date, hora: number): boolean => {
-    if (!periodosLaborales) return false
+  // Mapear días de la semana a nombres en inglés
+  const mapearDiaAIngles = (dia: Date): keyof PeriodosLaboralesPorDia => {
+    const diasIngles: (keyof PeriodosLaboralesPorDia)[] = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ]
+    return diasIngles[dia.getDay()]
+  }
 
-    const diaSemana = dia.getDay()
-    const dayNames = Object.keys(dayNameToNumber)
-    const dayName = dayNames.find((name) => dayNameToNumber[name] === diaSemana)
+  // Obtener horas laborales para un día específico
+  const getHorasLaboralesParaDia = (dia: Date): number[] => {
+    if (!periodosLaborales) return []
 
-    if (!dayName || !periodosLaborales[dayName as keyof PeriodosLaboralesPorDia]) return false
-
-    let periodosDia = periodosLaborales[dayName as keyof PeriodosLaboralesPorDia]
+    const diaIngles = mapearDiaAIngles(dia)
+    const periodosDelDia = periodosLaborales[diaIngles] || []
 
     // Filtrar por empleada si está seleccionada
-    if (empleadaFiltro !== "Todos") {
-      periodosDia = periodosDia.filter((p) => p.empleadaId.toString() === empleadaFiltro)
-    }
+    const periodosFiltrados =
+      empleadaFiltro !== "Todos"
+        ? periodosDelDia.filter((p) => p.empleadaId === Number(empleadaFiltro))
+        : periodosDelDia
 
-    return periodosDia.some((periodo) => {
-      const horaInicio = Number.parseInt(periodo.horaInicio.split(":")[0])
-      const horaFin = Number.parseInt(periodo.horaFin.split(":")[0])
-      return hora >= horaInicio && hora <= horaFin
+    const horasSet = new Set<number>()
+
+    periodosFiltrados.forEach((periodo) => {
+      if (periodo.tipo === "HorarioHabitual" && periodo.horaInicio && periodo.horaFin) {
+        const horaInicio = Number.parseInt(periodo.horaInicio.split(":")[0])
+        const horaFin = Number.parseInt(periodo.horaFin.split(":")[0])
+
+        for (let hora = horaInicio; hora <= horaFin; hora++) {
+          horasSet.add(hora)
+        }
+      }
     })
+
+    return Array.from(horasSet).sort((a, b) => a - b)
   }
+
+  // Horas del día basadas en períodos laborales
+  const horasDelDia = useMemo(() => {
+    if (vista === "semana") {
+      // Para vista semana, obtener todas las horas de todos los días
+      const todasLasHoras = new Set<number>()
+      diasSemana.forEach((dia) => {
+        const horasDia = getHorasLaboralesParaDia(dia)
+        horasDia.forEach((hora) => todasLasHoras.add(hora))
+      })
+      return Array.from(todasLasHoras).sort((a, b) => a - b)
+    } else {
+      // Para vista día, solo las horas del día actual
+      return getHorasLaboralesParaDia(fechaActual)
+    }
+  }, [vista, diasSemana, fechaActual, periodosLaborales, empleadaFiltro])
 
   // Obtener turnos para un día y hora específicos
   const getTurnosParaDiaYHora = (dia: Date, hora: number) => {
@@ -291,56 +334,11 @@ export default function CalendarioTurnosAdmin() {
     })
   }
 
-  // Obtener horas laborales para un día específico
-  const getHorasLaboralesParaDia = (dia: Date): number[] => {
-    if (!periodosLaborales) return []
-
-    const diaSemana = dia.getDay()
-    const dayNames = Object.keys(dayNameToNumber)
-    const dayName = dayNames.find((name) => dayNameToNumber[name] === diaSemana)
-
-    if (!dayName || !periodosLaborales[dayName as keyof PeriodosLaboralesPorDia]) return []
-
-    let periodosDia = periodosLaborales[dayName as keyof PeriodosLaboralesPorDia]
-
-    // Filtrar por empleada si está seleccionada
-    if (empleadaFiltro !== "Todos") {
-      periodosDia = periodosDia.filter((p) => p.empleadaId.toString() === empleadaFiltro)
-    }
-
-    if (periodosDia.length === 0) return []
-
-    // Obtener rango de horas de todos los períodos del día
-    const horasSet = new Set<number>()
-
-    periodosDia.forEach((periodo) => {
-      const horaInicio = Number.parseInt(periodo.horaInicio.split(":")[0])
-      const horaFin = Number.parseInt(periodo.horaFin.split(":")[0])
-
-      // Agregar todas las horas del rango
-      for (let hora = horaInicio; hora <= horaFin; hora++) {
-        horasSet.add(hora)
-      }
-    })
-
-    return Array.from(horasSet).sort((a, b) => a - b)
+  // Verificar si una hora es laboral para un día específico
+  const esHoraLaboral = (dia: Date, hora: number): boolean => {
+    const horasLaborales = getHorasLaboralesParaDia(dia)
+    return horasLaborales.includes(hora)
   }
-
-  // Obtener todas las horas laborales para la vista actual
-  const horasDelDia = useMemo(() => {
-    if (vista === "semana") {
-      // Para vista semanal, obtener todas las horas de todos los días
-      const todasLasHoras = new Set<number>()
-      diasSemana.forEach((dia) => {
-        const horasDia = getHorasLaboralesParaDia(dia)
-        horasDia.forEach((hora) => todasLasHoras.add(hora))
-      })
-      return Array.from(todasLasHoras).sort((a, b) => a - b)
-    } else {
-      // Para vista diaria, solo las horas del día actual
-      return getHorasLaboralesParaDia(fechaActual)
-    }
-  }, [periodosLaborales, empleadaFiltro, fechaActual, vista, diasSemana])
 
   if (isLoading) {
     return (
@@ -385,7 +383,6 @@ export default function CalendarioTurnosAdmin() {
                   >
                     <CalendarDays size={20} className="text-white" />
                   </motion.div>
-
                   <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-white">Calendario de Turnos</h1>
                     <p className="text-white/80 text-sm">
@@ -406,7 +403,6 @@ export default function CalendarioTurnosAdmin() {
                   >
                     Hoy
                   </Button>
-
                   <div className="flex items-center bg-white/20 rounded-lg">
                     <Button
                       onClick={navegarAnterior}
@@ -426,8 +422,8 @@ export default function CalendarioTurnosAdmin() {
                     </Button>
                   </div>
 
-                  {/* Selector de vista - oculto en pantallas muy pequeñas */}
-                  {!isVerySmall && (
+                  {/* Selector de vista - oculto en móviles muy pequeños */}
+                  {!isMobile && (
                     <div className="flex items-center bg-white/20 rounded-lg">
                       <Button
                         onClick={() => setVista("dia")}
@@ -459,73 +455,71 @@ export default function CalendarioTurnosAdmin() {
                 transition={{ delay: 0.3 }}
                 className="p-4 sm:p-6 border-b border-[#e1cfc0] bg-gradient-to-r from-[#fdf6f1] to-[#f8f0e8]"
               >
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="flex items-center space-x-3 mb-6"
-                >
-                  <div className="w-8 h-8 bg-[#7a5b4c]/10 rounded-full flex items-center justify-center">
+                <div className="flex items-center space-x-3 mb-6">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+                    className="w-8 h-8 bg-[#a37e63]/20 rounded-full flex items-center justify-center"
+                  >
                     <Filter size={16} className="text-[#7a5b4c]" />
-                  </div>
+                  </motion.div>
                   <div>
-                    <h3 className="text-lg font-bold text-[#7a5b4c]">Filtros de Visualización</h3>
-                    <p className="text-sm text-[#7a5b4c]/60">Personaliza la vista del calendario</p>
+                    <h3 className="text-lg font-bold text-[#7a5b4c]">Filtros de Búsqueda</h3>
+                    <p className="text-sm text-[#7a5b4c]/70">Personaliza la vista del calendario</p>
                   </div>
-                </motion.div>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Filtro de Sucursal */}
+                  {/* Filtro de Sucursal - Obligatorio */}
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    className="space-y-2"
+                    className="relative"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Building2 size={14} className="text-[#7a5b4c]" />
-                      <label className="text-sm font-medium text-[#7a5b4c]">Sucursal</label>
-                      <span className="text-xs text-red-500">*</span>
-                    </div>
+                    <label className="block text-sm font-semibold text-[#7a5b4c] mb-2">
+                      <div className="flex items-center space-x-2">
+                        <Building2 size={16} className="text-[#a37e63]" />
+                        <span>Sucursal *</span>
+                      </div>
+                    </label>
                     <Select value={sucursalFiltro} onValueChange={setSucursalFiltro}>
-                      <SelectTrigger className="bg-white border-[#e1cfc0] text-[#7a5b4c] text-sm hover:border-[#7a5b4c] transition-colors">
+                      <SelectTrigger className="bg-white/80 border-2 border-[#e1cfc0] hover:border-[#a37e63] focus:border-[#a37e63] text-[#7a5b4c] text-sm h-12 rounded-xl transition-all duration-200">
                         <SelectValue placeholder="Seleccionar sucursal" />
                       </SelectTrigger>
                       <SelectContent>
                         {sucursales.map((s) => (
                           <SelectItem key={s.id} value={s.id.toString()}>
-                            <div className="flex items-center space-x-2">
-                              <Building2 size={12} />
-                              <span>{s.nombre}</span>
-                            </div>
+                            {s.nombre}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {!sucursalFiltro && <p className="text-xs text-red-500 mt-1">* Campo obligatorio</p>}
                   </motion.div>
 
                   {/* Filtro de Empleada */}
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="space-y-2"
+                    className="relative"
                   >
-                    <div className="flex items-center space-x-2">
-                      <UserCheck size={14} className="text-[#7a5b4c]" />
-                      <label className="text-sm font-medium text-[#7a5b4c]">Empleada</label>
-                    </div>
+                    <label className="block text-sm font-semibold text-[#7a5b4c] mb-2">
+                      <div className="flex items-center space-x-2">
+                        <UserCheck size={16} className="text-[#a37e63]" />
+                        <span>Empleada</span>
+                      </div>
+                    </label>
                     <Select value={empleadaFiltro} onValueChange={setEmpleadaFiltro}>
-                      <SelectTrigger className="bg-white border-[#e1cfc0] text-[#7a5b4c] text-sm hover:border-[#7a5b4c] transition-colors">
+                      <SelectTrigger className="bg-white/80 border-2 border-[#e1cfc0] hover:border-[#a37e63] focus:border-[#a37e63] text-[#7a5b4c] text-sm h-12 rounded-xl transition-all duration-200">
                         <SelectValue placeholder="Todas las empleadas" />
                       </SelectTrigger>
                       <SelectContent>
                         {empleadas.map((e) => (
                           <SelectItem key={e.id} value={e.id === -1 ? "Todos" : e.id.toString()}>
-                            <div className="flex items-center space-x-2">
-                              <Users size={12} />
-                              <span>{e.nombre}</span>
-                            </div>
+                            {e.nombre}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -534,26 +528,25 @@ export default function CalendarioTurnosAdmin() {
 
                   {/* Filtro de Estado */}
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.7 }}
-                    className="space-y-2"
+                    className="relative"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Activity size={14} className="text-[#7a5b4c]" />
-                      <label className="text-sm font-medium text-[#7a5b4c]">Estado</label>
-                    </div>
+                    <label className="block text-sm font-semibold text-[#7a5b4c] mb-2">
+                      <div className="flex items-center space-x-2">
+                        <Activity size={16} className="text-[#a37e63]" />
+                        <span>Estado</span>
+                      </div>
+                    </label>
                     <Select value={estadoFiltro} onValueChange={setEstadoFiltro}>
-                      <SelectTrigger className="bg-white border-[#e1cfc0] text-[#7a5b4c] text-sm hover:border-[#7a5b4c] transition-colors">
+                      <SelectTrigger className="bg-white/80 border-2 border-[#e1cfc0] hover:border-[#a37e63] focus:border-[#a37e63] text-[#7a5b4c] text-sm h-12 rounded-xl transition-all duration-200">
                         <SelectValue placeholder="Todos los estados" />
                       </SelectTrigger>
                       <SelectContent>
                         {estados.map((e) => (
                           <SelectItem key={e} value={e}>
-                            <div className="flex items-center space-x-2">
-                              {getEstadoIcon(e)}
-                              <span>{e}</span>
-                            </div>
+                            {e}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -562,8 +555,19 @@ export default function CalendarioTurnosAdmin() {
                 </div>
               </motion.div>
 
-              {/* Vista de Semana - Solo en pantallas grandes */}
-              {vista === "semana" && !isVerySmall && (
+              {/* Mensaje cuando no hay sucursal seleccionada */}
+              {!sucursalFiltro && (
+                <div className="p-8 text-center">
+                  <Building2 size={48} className="mx-auto mb-4 text-[#7a5b4c]/40" />
+                  <h3 className="text-lg font-semibold text-[#7a5b4c] mb-2">Selecciona una Sucursal</h3>
+                  <p className="text-[#7a5b4c]/60">
+                    Para ver el calendario de turnos, primero debes seleccionar una sucursal en los filtros.
+                  </p>
+                </div>
+              )}
+
+              {/* Vista de Semana */}
+              {sucursalFiltro && vista === "semana" && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -597,73 +601,82 @@ export default function CalendarioTurnosAdmin() {
 
                   {/* Grid de horas y turnos */}
                   <div className="max-h-[600px] overflow-y-auto">
-                    {horasDelDia.map((hora) => (
-                      <div key={hora} className="grid grid-cols-8 border-b border-[#e1cfc0] min-h-[80px]">
-                        {/* Columna de hora */}
-                        <div className="p-2 text-center text-sm text-[#7a5b4c]/60 border-r border-[#e1cfc0] bg-[#fdf6f1] flex items-start justify-center pt-3">
-                          {hora.toString().padStart(2, "0")}:00
-                        </div>
-
-                        {/* Columnas de días */}
-                        {diasSemana.map((dia) => {
-                          const turnosDiaHora = getTurnosParaDiaYHora(dia, hora)
-                          const esLaboral = esHorarioLaboral(dia, hora)
-
-                          return (
-                            <div
-                              key={`${dia.toISOString()}-${hora}`}
-                              className={cn(
-                                "p-1 border-r border-[#e1cfc0] last:border-r-0 min-h-[80px] transition-colors",
-                                esLaboral ? "hover:bg-[#fdf6f1] bg-white" : "bg-gray-50 hover:bg-gray-100",
-                              )}
-                            >
-                              {!esLaboral ? (
-                                <div className="flex items-center justify-center h-full">
-                                  <span className="text-xs text-gray-400">Sin horario</span>
-                                </div>
-                              ) : (
-                                <div className="space-y-1">
-                                  {turnosDiaHora.map((turno) => (
-                                    <motion.div
-                                      key={turno.id}
-                                      initial={{ opacity: 0, scale: 0.9 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      className="bg-white border border-[#e1cfc0] rounded p-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                      style={{
-                                        borderLeftColor: turno.empleadaColor || "#a37e63",
-                                        borderLeftWidth: "3px",
-                                      }}
-                                    >
-                                      <div className="text-xs font-medium text-[#7a5b4c] truncate">
-                                        {turno.clienteNombre} {turno.clienteApellido}
-                                      </div>
-                                      <div className="text-xs text-[#7a5b4c]/60 truncate">
-                                        {format(parseISO(turno.fechaHoraInicio), "HH:mm")} -{" "}
-                                        {format(parseISO(turno.fechaHoraFin), "HH:mm")}
-                                      </div>
-                                      <div className="flex items-center space-x-1 mt-1">
-                                        <Badge className={`${getEstadoColor(turno.estado)} text-xs px-1 py-0`}>
-                                          {getEstadoIcon(turno.estado)}
-                                        </Badge>
-                                        <span className="text-xs text-[#7a5b4c]/60 truncate">
-                                          {turno.empleadaNombre}
-                                        </span>
-                                      </div>
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
+                    {horasDelDia.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Clock size={48} className="mx-auto mb-4 text-[#7a5b4c]/40" />
+                        <h3 className="text-lg font-semibold text-[#7a5b4c] mb-2">Sin Horarios Laborales</h3>
+                        <p className="text-[#7a5b4c]/60">
+                          No hay períodos laborales configurados para esta sucursal y filtros seleccionados.
+                        </p>
                       </div>
-                    ))}
+                    ) : (
+                      horasDelDia.map((hora) => (
+                        <div key={hora} className="grid grid-cols-8 border-b border-[#e1cfc0] min-h-[80px]">
+                          {/* Columna de hora */}
+                          <div className="p-2 text-center text-sm text-[#7a5b4c]/60 border-r border-[#e1cfc0] bg-[#fdf6f1] flex items-start justify-center pt-3">
+                            {hora.toString().padStart(2, "0")}:00
+                          </div>
+                          {/* Columnas de días */}
+                          {diasSemana.map((dia) => {
+                            const turnosDiaHora = getTurnosParaDiaYHora(dia, hora)
+                            const esLaboral = esHoraLaboral(dia, hora)
+
+                            return (
+                              <div
+                                key={`${dia.toISOString()}-${hora}`}
+                                className={cn(
+                                  "p-1 border-r border-[#e1cfc0] last:border-r-0 min-h-[80px] transition-colors",
+                                  esLaboral ? "hover:bg-[#fdf6f1] bg-white" : "bg-gray-50 hover:bg-gray-100",
+                                )}
+                              >
+                                {esLaboral ? (
+                                  <div className="space-y-1">
+                                    {turnosDiaHora.map((turno) => (
+                                      <motion.div
+                                        key={turno.id}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="bg-white border border-[#e1cfc0] rounded p-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        style={{
+                                          borderLeftColor: turno.empleadaColor || "#a37e63",
+                                          borderLeftWidth: "3px",
+                                        }}
+                                      >
+                                        <div className="text-xs font-medium text-[#7a5b4c] truncate">
+                                          {turno.clienteNombre} {turno.clienteApellido}
+                                        </div>
+                                        <div className="text-xs text-[#7a5b4c]/60 truncate">
+                                          {format(parseISO(turno.fechaHoraInicio), "HH:mm")} -{" "}
+                                          {format(parseISO(turno.fechaHoraFin), "HH:mm")}
+                                        </div>
+                                        <div className="flex items-center space-x-1 mt-1">
+                                          <Badge className={`${getEstadoColor(turno.estado)} text-xs px-1 py-0`}>
+                                            {getEstadoIcon(turno.estado)}
+                                          </Badge>
+                                          <span className="text-xs text-[#7a5b4c]/60 truncate">
+                                            {turno.empleadaNombre}
+                                          </span>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="h-full flex items-center justify-center">
+                                    <span className="text-xs text-gray-400">Sin horario</span>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </motion.div>
               )}
 
-              {/* Vista de Día / Agenda */}
-              {(vista === "dia" || isVerySmall) && (
+              {/* Vista de Día */}
+              {sucursalFiltro && vista === "dia" && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -671,143 +684,127 @@ export default function CalendarioTurnosAdmin() {
                   className="p-4 sm:p-6"
                 >
                   <div className="space-y-4">
-                    {horasDelDia.map((hora) => {
-                      const turnosHora = getTurnosParaDiaYHora(fechaActual, hora)
-                      return (
-                        <motion.div
-                          key={hora}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: hora * 0.05 }}
-                          className="border border-[#e1cfc0] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <div className="bg-gradient-to-r from-[#f8f0e8] to-[#fdf6f1] px-4 py-3 border-b border-[#e1cfc0]">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 bg-[#7a5b4c]/10 rounded-full flex items-center justify-center">
-                                  <Clock size={14} className="text-[#7a5b4c]" />
-                                </div>
-                                <div>
-                                  <span className="font-semibold text-[#7a5b4c] text-lg">
-                                    {hora.toString().padStart(2, "0")}:00
-                                  </span>
-                                  <span className="text-sm text-[#7a5b4c]/60 ml-2">
-                                    ({turnosHora.length} turno{turnosHora.length !== 1 ? "s" : ""})
-                                  </span>
-                                </div>
+                    {horasDelDia.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Clock size={48} className="mx-auto mb-4 text-[#7a5b4c]/40" />
+                        <h3 className="text-lg font-semibold text-[#7a5b4c] mb-2">Sin Horarios Laborales</h3>
+                        <p className="text-[#7a5b4c]/60">
+                          No hay períodos laborales configurados para este día y filtros seleccionados.
+                        </p>
+                      </div>
+                    ) : (
+                      horasDelDia.map((hora) => {
+                        const turnosHora = getTurnosParaDiaYHora(fechaActual, hora)
+                        return (
+                          <div key={hora} className="border border-[#e1cfc0] rounded-lg overflow-hidden">
+                            <div className="bg-[#f8f0e8] px-4 py-2 border-b border-[#e1cfc0]">
+                              <div className="flex items-center space-x-2">
+                                <Clock size={16} className="text-[#7a5b4c]" />
+                                <span className="font-medium text-[#7a5b4c]">
+                                  {hora.toString().padStart(2, "0")}:00
+                                </span>
+                                <span className="text-sm text-[#7a5b4c]/60">
+                                  ({turnosHora.length} turno{turnosHora.length !== 1 ? "s" : ""})
+                                </span>
                               </div>
-                              {turnosHora.length > 0 && (
-                                <Badge variant="secondary" className="bg-[#7a5b4c]/10 text-[#7a5b4c]">
-                                  Activo
-                                </Badge>
+                            </div>
+                            <div className="p-4">
+                              {turnosHora.length === 0 ? (
+                                <div className="text-center py-8 text-[#7a5b4c]/60">
+                                  <Clock size={24} className="mx-auto mb-2 opacity-50" />
+                                  <p className="text-sm">Sin turnos programados</p>
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                  {turnosHora.map((turno) => (
+                                    <motion.div
+                                      key={turno.id}
+                                      initial={{ opacity: 0, y: 20 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="bg-gradient-to-r from-white to-[#fdf6f1] border border-[#e1cfc0] rounded-lg p-4 hover:shadow-md transition-all duration-200"
+                                      style={{
+                                        borderLeftColor: turno.empleadaColor || "#a37e63",
+                                        borderLeftWidth: "4px",
+                                      }}
+                                    >
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center space-x-2">
+                                          <Clock size={14} className="text-[#7a5b4c]" />
+                                          <span className="font-semibold text-[#7a5b4c] text-sm">
+                                            {format(parseISO(turno.fechaHoraInicio), "HH:mm")} -{" "}
+                                            {format(parseISO(turno.fechaHoraFin), "HH:mm")}
+                                          </span>
+                                        </div>
+                                        <Badge className={`${getEstadoColor(turno.estado)} text-xs`}>
+                                          {getEstadoIcon(turno.estado)}
+                                          <span className="ml-1">{turno.estado}</span>
+                                        </Badge>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center space-x-2">
+                                          <User size={12} className="text-[#7a5b4c]/60" />
+                                          <span className="text-sm font-medium text-[#7a5b4c]">
+                                            {turno.clienteNombre} {turno.clienteApellido}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <Phone size={12} className="text-[#7a5b4c]/60" />
+                                          <span className="text-sm text-[#7a5b4c]/70">{turno.clienteTelefono}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <Users size={12} className="text-[#7a5b4c]/60" />
+                                          <span
+                                            className="text-sm font-medium"
+                                            style={{ color: turno.empleadaColor || "#7a5b4c" }}
+                                          >
+                                            {turno.empleadaNombre}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <MapPin size={12} className="text-[#7a5b4c]/60" />
+                                          <span className="text-sm text-[#7a5b4c]/70">{turno.sucursalNombre}</span>
+                                        </div>
+                                        {turno.servicios.length > 0 && (
+                                          <div className="mt-2">
+                                            <div className="flex flex-wrap gap-1">
+                                              {turno.servicios.map((servicio, i) => (
+                                                <Badge
+                                                  key={i}
+                                                  variant="secondary"
+                                                  className="bg-blue-100 text-blue-800 text-xs"
+                                                >
+                                                  {servicio}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {turno.extras.length > 0 && (
+                                          <div className="mt-2">
+                                            <div className="flex flex-wrap gap-1">
+                                              {turno.extras.map((extra, i) => (
+                                                <Badge
+                                                  key={i}
+                                                  variant="secondary"
+                                                  className="bg-purple-100 text-purple-800 text-xs"
+                                                >
+                                                  <Star size={8} className="mr-1" />
+                                                  {extra}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  ))}
+                                </div>
                               )}
                             </div>
                           </div>
-
-                          <div className="p-4">
-                            {turnosHora.length === 0 ? (
-                              <div className="text-center py-8 text-[#7a5b4c]/60">
-                                <Clock size={32} className="mx-auto mb-3 opacity-30" />
-                                <p className="text-sm font-medium">Sin turnos programados</p>
-                                <p className="text-xs mt-1">Horario disponible para nuevas citas</p>
-                              </div>
-                            ) : (
-                              <div className="grid grid-cols-1 gap-4">
-                                {turnosHora.map((turno, index) => (
-                                  <motion.div
-                                    key={turno.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className="bg-gradient-to-r from-white to-[#fdf6f1] border border-[#e1cfc0] rounded-lg p-4 hover:shadow-md transition-all duration-200"
-                                    style={{
-                                      borderLeftColor: turno.empleadaColor || "#a37e63",
-                                      borderLeftWidth: "4px",
-                                    }}
-                                  >
-                                    <div className="flex items-center justify-between mb-3">
-                                      <div className="flex items-center space-x-2">
-                                        <Clock size={14} className="text-[#7a5b4c]" />
-                                        <span className="font-semibold text-[#7a5b4c] text-sm">
-                                          {format(parseISO(turno.fechaHoraInicio), "HH:mm")} -{" "}
-                                          {format(parseISO(turno.fechaHoraFin), "HH:mm")}
-                                        </span>
-                                      </div>
-                                      <Badge className={`${getEstadoColor(turno.estado)} text-xs`}>
-                                        {getEstadoIcon(turno.estado)}
-                                        <span className="ml-1">{turno.estado}</span>
-                                      </Badge>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                      <div className="flex items-center space-x-2">
-                                        <User size={12} className="text-[#7a5b4c]/60" />
-                                        <span className="text-sm font-medium text-[#7a5b4c]">
-                                          {turno.clienteNombre} {turno.clienteApellido}
-                                        </span>
-                                      </div>
-
-                                      <div className="flex items-center space-x-2">
-                                        <Phone size={12} className="text-[#7a5b4c]/60" />
-                                        <span className="text-sm text-[#7a5b4c]/70">{turno.clienteTelefono}</span>
-                                      </div>
-
-                                      <div className="flex items-center space-x-2">
-                                        <Users size={12} className="text-[#7a5b4c]/60" />
-                                        <span
-                                          className="text-sm font-medium"
-                                          style={{ color: turno.empleadaColor || "#7a5b4c" }}
-                                        >
-                                          {turno.empleadaNombre}
-                                        </span>
-                                      </div>
-
-                                      <div className="flex items-center space-x-2">
-                                        <MapPin size={12} className="text-[#7a5b4c]/60" />
-                                        <span className="text-sm text-[#7a5b4c]/70">{turno.sucursalNombre}</span>
-                                      </div>
-
-                                      {turno.servicios.length > 0 && (
-                                        <div className="mt-3">
-                                          <div className="flex flex-wrap gap-1">
-                                            {turno.servicios.map((servicio, i) => (
-                                              <Badge
-                                                key={i}
-                                                variant="secondary"
-                                                className="bg-blue-100 text-blue-800 text-xs"
-                                              >
-                                                {servicio}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {turno.extras.length > 0 && (
-                                        <div className="mt-2">
-                                          <div className="flex flex-wrap gap-1">
-                                            {turno.extras.map((extra, i) => (
-                                              <Badge
-                                                key={i}
-                                                variant="secondary"
-                                                className="bg-purple-100 text-purple-800 text-xs"
-                                              >
-                                                <Star size={8} className="mr-1" />
-                                                {extra}
-                                              </Badge>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )
-                    })}
+                        )
+                      })
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -823,46 +820,6 @@ export default function CalendarioTurnosAdmin() {
                   >
                     <AlertCircle size={16} className="text-red-500" />
                     <p className="text-sm text-red-600 font-medium">{error}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Mensaje cuando no hay horarios laborales */}
-              <AnimatePresence>
-                {!isLoading && horasDelDia.length === 0 && sucursalFiltro && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="m-4 sm:m-6 flex items-center space-x-2 p-4 bg-blue-50 border border-blue-200 rounded-lg"
-                  >
-                    <Clock size={16} className="text-blue-500" />
-                    <div>
-                      <p className="text-sm text-blue-600 font-medium">Sin horarios laborales configurados</p>
-                      <p className="text-xs text-blue-500 mt-1">
-                        No hay períodos laborales activos para los filtros seleccionados en las fechas mostradas.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Mensaje cuando no se ha seleccionado sucursal */}
-              <AnimatePresence>
-                {!isLoading && !sucursalFiltro && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="m-4 sm:m-6 flex items-center space-x-2 p-4 bg-amber-50 border border-amber-200 rounded-lg"
-                  >
-                    <Building2 size={16} className="text-amber-500" />
-                    <div>
-                      <p className="text-sm text-amber-600 font-medium">Selecciona una sucursal</p>
-                      <p className="text-xs text-amber-500 mt-1">
-                        Es necesario seleccionar una sucursal para mostrar el calendario de turnos.
-                      </p>
-                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
