@@ -27,6 +27,10 @@ interface DetalleTurno {
   servicio: Servicio;
   extras: Extra[]; // <-- agrega esto
 }
+interface Sector {
+  id: number;
+  nombre: string;
+}
 
 interface Empleado {
   id: number;
@@ -44,6 +48,9 @@ interface ClienteData {
 interface TurnoContextType {
   sucursal: Sucursal | null;
   setSucursal: (s: Sucursal) => void;
+
+  sector: Sector | null;
+  setSector: (s: Sector) => void;
 
   detalles: DetalleTurno[];
   agregarDetalle: (servicio: Servicio) => void;
@@ -70,6 +77,7 @@ const TurnoContext = createContext<TurnoContextType | undefined>(undefined);
 
 export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [sucursal, setSucursal] = useState<Sucursal | null>(null);
+  const [sector, setSector] = useState<Sector | null>(null);
   const [detalles, setDetalles] = useState<DetalleTurno[]>([]);
   const [fechaHora, setFechaHora] = useState<string>("");
   const [empleado, setEmpleado] = useState<Empleado | null>(null);
@@ -120,6 +128,7 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const resetTurno = () => {
     setSucursal(null);
+    setSector(null);
     setDetalles([]);
     setFechaHora("");
     setEmpleado(null);
@@ -131,6 +140,8 @@ export const TurnoProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       value={{
         sucursal,
         setSucursal,
+        sector,
+        setSector,
         detalles,
         agregarDetalle,
         agregarDetalles,

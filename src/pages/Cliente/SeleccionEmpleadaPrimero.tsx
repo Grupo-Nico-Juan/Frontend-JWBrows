@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -17,6 +16,7 @@ interface EmpleadaCompleta {
   nombre: string
   apellido: string
   nombreCompleto: string
+  sucursalId?: number
   habilidades?: Array<{
     id: number
     nombre: string
@@ -29,10 +29,10 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<number | null>(null)
-  const { detalles, setEmpleado, sucursal, servicios } = useTurno()
+  const { detalles, setEmpleado, sucursal, servicios, sector } = useTurno()
 
   useEffect(() => {
-    if (!sucursal || detalles.length === 0) {
+    if (!sucursal || !sector || detalles.length === 0) {
       navigate("/reserva/servicio")
       return
     }
@@ -42,7 +42,6 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
       setError("")
 
       try {
-        // Obtener habilidades requeridas para los servicios seleccionados
         const habilidadesRequeridas = new Set<number>()
 
         for (const detalle of detalles) {
@@ -56,64 +55,69 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
           }
         }
 
-        // Si no hay habilidades específicas, obtener todos los empleados
+        const empleadasFiltradas: EmpleadaCompleta[] = []
+
         if (habilidadesRequeridas.size === 0) {
-          const response = await axios.get<EmpleadaCompleta[]>("/api/Empleado")
-          setEmpleadas(response.data)
+          try {
+            const response = await axios.get<EmpleadaCompleta[]>(`/api/Empleado/sector/${sector.id}/empleadas`)
+            empleadasFiltradas.push(
+              ...response.data.map((e) => ({
+                ...e,
+                nombreCompleto: `${e.nombre} ${e.apellido}`,
+                habilidades: [],
+              }))
+            )
+          } catch (err) {
+            console.error("Error cargando empleadas por sector:", err)
+          }
         } else {
-          // Obtener empleados que tengan las habilidades requeridas
-          const empleadosConHabilidades = new Set<number>()
+          const empleadosConHabilidades = new Map<number, any>()
 
           for (const habilidadId of habilidadesRequeridas) {
             try {
               const response = await axios.get(`/api/Empleado/habilidad/${habilidadId}`)
               response.data.forEach((empleado: any) => {
-                empleadosConHabilidades.add(empleado.id)
+                if (empleado.sucursalId === sucursal.id) {
+                  empleadosConHabilidades.set(empleado.id, empleado)
+                }
               })
             } catch (err) {
               console.error(`Error obteniendo empleados para habilidad ${habilidadId}:`, err)
             }
           }
 
-          // Obtener detalles completos de los empleados filtrados
-          const empleadosCompletos: EmpleadaCompleta[] = []
-          for (const empleadoId of empleadosConHabilidades) {
+          for (const [empleadoId, empleado] of empleadosConHabilidades) {
             try {
-              const response = await axios.get(`/api/Empleado/${empleadoId}`)
               const habilidadesResponse = await axios.get(`/api/Empleado/${empleadoId}/habilidades`)
-
-              empleadosCompletos.push({
-                ...response.data,
-                nombreCompleto: `${response.data.nombre} ${response.data.apellido}`,
+              empleadasFiltradas.push({
+                ...empleado,
+                nombreCompleto: `${empleado.nombre} ${empleado.apellido}`,
                 habilidades: habilidadesResponse.data,
               })
             } catch (err) {
               console.error(`Error obteniendo detalles del empleado ${empleadoId}:`, err)
             }
           }
-
-          setEmpleadas(empleadosCompletos)
         }
+
+        setEmpleadas(empleadasFiltradas)
       } catch (err) {
         setError("Error al cargar los profesionales. Por favor, intenta nuevamente.")
-        console.error("Error cargando empleadas", err)
+        console.error("Error cargando empleadas:", err)
       } finally {
         setLoading(false)
       }
     }
 
     cargarEmpleadas()
-  }, [detalles, navigate, sucursal])
-
+  }, [detalles, navigate, sucursal, sector])
   const handleSeleccion = (emp: EmpleadaCompleta) => {
     setEmpleadoSeleccionado(emp.id)
-
     setEmpleado({
       id: emp.id,
       nombre: emp.nombre,
       apellido: emp.apellido,
     })
-
     // Pequeño delay para mostrar la selección antes de navegar
     setTimeout(() => {
       navigate("/reserva/fecha-hora-empleada")
@@ -137,7 +141,7 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#6d4c41] mb-2">Cargando profesionales</h3>
-              <p className="text-[#8d6e63]">Encontrando los mejores especialistas para tus servicios...</p>
+              <p className="text-[#8d6e63]">Encontrando especialistas disponibles en {sucursal?.nombre}...</p>
             </div>
           </div>
         </Card>
@@ -188,7 +192,6 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                 <span className="font-medium">{sucursal?.nombre}</span>
               </p>
             </div>
-
             {/* Resumen de servicios */}
             <div className="hidden lg:block">
               <Card className="bg-[#f8f0ec] border-[#e0d6cf]">
@@ -226,18 +229,28 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
           >
             <Card className="bg-white/60 backdrop-blur-sm border-[#e0d6cf] p-8">
               <Users className="h-16 w-16 text-[#d2bfae] mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[#6d4c41] mb-2">No hay profesionales disponibles</h3>
+              <h3 className="text-lg font-semibold text-[#6d4c41] mb-2">
+                No hay profesionales disponibles en {sucursal?.nombre}
+              </h3>
               <p className="text-[#8d6e63] mb-4">
-                No encontramos especialistas que puedan realizar todos tus servicios. Te sugerimos contactarnos
-                directamente.
+                No encontramos especialistas en esta sucursal que puedan realizar todos tus servicios. Prueba
+                seleccionando otra sucursal o contactanos directamente.
               </p>
-              <Button
-                onClick={() => navigate("/reserva/servicio")}
-                variant="outline"
-                className="border-[#a1887f] text-[#a1887f] hover:bg-[#a1887f] hover:text-white"
-              >
-                Volver a servicios
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={() => navigate("/reserva/sucursal")}
+                  className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+                >
+                  Cambiar sucursal
+                </Button>
+                <Button
+                  onClick={() => navigate("/reserva/servicio")}
+                  variant="outline"
+                  className="border-[#a1887f] text-[#a1887f] hover:bg-[#a1887f] hover:text-white"
+                >
+                  Volver a servicios
+                </Button>
+              </div>
             </Card>
           </motion.div>
         ) : (
@@ -250,16 +263,16 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                     <div className="space-y-2">
                       <h3 className="text-lg font-bold flex items-center gap-2">
                         <Sparkles className="h-5 w-5" />
-                        Flujo personalizado
+                        Profesionales de {sucursal?.nombre}
                       </h3>
                       <p className="text-white/90 text-sm">
-                        Después de elegir tu profesional, verás solo sus horarios disponibles para una experiencia más
+                        Mostrando solo especialistas disponibles en tu sucursal seleccionada para una experiencia más
                         personalizada
                       </p>
                     </div>
                     <div className="hidden sm:flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm font-medium">Profesional → Horario</span>
+                      <Building2 className="h-4 w-4" />
+                      <span className="text-sm font-medium">{sucursal?.nombre}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -277,19 +290,18 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                   <div className="mb-6">
                     <h2 className="text-xl font-bold text-[#6d4c41] flex items-center gap-2 mb-2">
                       <Users className="h-5 w-5" />
-                      Nuestros especialistas
+                      Especialistas disponibles
                     </h2>
                     <p className="text-[#8d6e63]">
-                      {empleadas.length} profesional{empleadas.length > 1 ? "es" : ""} especializado
+                      {empleadas.length} profesional{empleadas.length > 1 ? "es" : ""} en {sucursal?.nombre}{" "}
+                      especializado
                       {empleadas.length > 1 ? "s" : ""} en tus servicios
                     </p>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <AnimatePresence>
                       {empleadas.map((empleado, index) => {
                         const esSeleccionado = empleadoSeleccionado === empleado.id
-
                         return (
                           <motion.div
                             key={empleado.id}
@@ -316,15 +328,13 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                                         {obtenerIniciales(empleado.nombre, empleado.apellido)}
                                       </AvatarFallback>
                                     </Avatar>
-
                                     <div className="flex-1 space-y-2">
                                       <div>
                                         <h3 className="text-lg font-bold text-[#6d4c41]">
                                           {empleado.nombre} {empleado.apellido}
                                         </h3>
-                                        <p className="text-sm text-[#8d6e63]">Especialista en belleza</p>
+                                        <p className="text-sm text-[#8d6e63]">Especialista en {sucursal?.nombre}</p>
                                       </div>
-
                                       {/* Rating simulado */}
                                       <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1">
@@ -338,21 +348,18 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                                           ))}
                                           <span className="text-sm text-[#8d6e63] ml-1">4.8</span>
                                         </div>
-
                                         <div className="flex items-center gap-1 text-[#8d6e63]">
                                           <Award className="h-4 w-4" />
                                           <span className="text-sm">Certificado</span>
                                         </div>
                                       </div>
                                     </div>
-
                                     {esSeleccionado && (
                                       <div className="p-2 bg-[#8d6e63] rounded-full">
                                         <CheckCircle className="h-5 w-5 text-white" />
                                       </div>
                                     )}
                                   </div>
-
                                   {/* Habilidades */}
                                   {empleado.habilidades && empleado.habilidades.length > 0 && (
                                     <div>
@@ -370,18 +377,16 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                                       </div>
                                     </div>
                                   )}
-
                                   {/* Servicios compatibles */}
                                   <div className="pt-3 border-t border-[#e0d6cf]">
                                     <div className="flex items-center justify-between text-sm">
-                                      <span className="text-[#8d6e63]">Puede realizar tus servicios seleccionados</span>
+                                      <span className="text-[#8d6e63]">Disponible en {sucursal?.nombre}</span>
                                       <div className="flex items-center gap-1 text-green-600">
                                         <CheckCircle className="h-4 w-4" />
                                         <span className="font-medium">Disponible</span>
                                       </div>
                                     </div>
                                   </div>
-
                                   {/* Botón de selección */}
                                   <Button
                                     className={`w-full transition-all duration-300 ${
@@ -426,12 +431,12 @@ const SeleccionEmpleadaPrimero: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-[#8d6e63] mt-0.5" />
                     <div className="text-sm text-[#6d4c41]">
-                      <p className="font-medium mb-1">Ventajas de elegir profesional primero:</p>
+                      <p className="font-medium mb-1">Profesionales de {sucursal?.nombre}:</p>
                       <ul className="space-y-1 text-[#8d6e63]">
-                        <li>• Verás solo los horarios disponibles de tu especialista elegido</li>
-                        <li>• Experiencia más personalizada y consistente</li>
-                        <li>• Ideal si ya conocés y confiás en algún profesional</li>
-                        <li>• Garantía de atención con tu especialista preferido</li>
+                        <li>• Solo mostramos especialistas disponibles en tu sucursal</li>
+                        <li>• Cada profesional está capacitado para tus servicios seleccionados</li>
+                        <li>• Verás únicamente los horarios disponibles de tu especialista elegido</li>
+                        <li>• Garantía de atención en la sucursal que seleccionaste</li>
                       </ul>
                     </div>
                   </div>

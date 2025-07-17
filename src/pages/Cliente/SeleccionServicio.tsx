@@ -65,7 +65,7 @@ const SeleccionServicio: React.FC = () => {
   const [extrasSeleccionados, setExtrasSeleccionados] = useState<Extra[]>([])
   const [servicioInfo, setServicioInfo] = useState<Servicio | null>(null)
   const navigate = useNavigate()
-  const { agregarDetalle, agregarExtra, quitarDetalle, sucursal, servicios, detalles } = useTurno()
+  const { agregarDetalle, agregarExtra, quitarDetalle, sucursal, setSector, servicios, detalles } = useTurno()
 
   useEffect(() => {
     if (!sucursal) {
@@ -79,7 +79,9 @@ const SeleccionServicio: React.FC = () => {
         const response = await axios.get(`/api/Sector/sucursal/${sucursal.id}`)
         setSectores(response.data)
         if (response.data.length > 0) {
-          setSectorActivo(response.data[0].id.toString())
+          setSectorActivo(response.data[0].id.toString()),
+          setSector(response.data[0])
+
         }
       } catch (err) {
         setError("Error al cargar los servicios. Por favor, intenta nuevamente.")
