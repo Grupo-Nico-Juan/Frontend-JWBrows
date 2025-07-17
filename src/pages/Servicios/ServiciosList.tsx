@@ -32,6 +32,9 @@ import {
   Search,
   X,
 } from "lucide-react"
+import Pagination from "@/components/pagination"
+import { usePagination } from "@/hooks/use-pagination"
+
 
 interface Servicio {
   id: number
@@ -48,10 +51,25 @@ interface Extra {
 const ServiciosList: React.FC = () => {
   const navigate = useNavigate()
   const [servicios, setServicios] = useState<Servicio[]>([])
+  const [filteredServicios, setFilteredServicios] = useState<Servicio[]>([])
   const [extrasCount, setExtrasCount] = useState<Record<number, number>>({})
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState<string>("")
+
+  
+  // Hook de paginación
+  const {
+    currentPage,
+    itemsPerPage,
+    paginatedData: paginatedServicios,
+    setCurrentPage,
+    setItemsPerPage,
+    resetToFirstPage,
+  } = usePagination({
+    data: filteredServicios,
+    initialItemsPerPage: 8,
+  })
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -59,6 +77,7 @@ const ServiciosList: React.FC = () => {
       try {
         const res = await axios.get<Servicio[]>("/api/Servicio")
         setServicios(res.data)
+        setFilteredServicios(res.data)
       } catch {
         setError("Error al cargar los servicios")
       } finally {
@@ -90,6 +109,15 @@ const ServiciosList: React.FC = () => {
     fetchCounts()
   }, [servicios])
 
+
+    // Filtrar servicios
+  useEffect(() => {
+    const filtered = servicios.filter((servicio) => servicio.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+    setFilteredServicios(filtered)
+    resetToFirstPage()
+  }, [servicios, searchTerm, resetToFirstPage])
+
+  
   const handleDelete = async (id: number, nombre: string) => {
     if (!window.confirm(`¿Estás seguro de eliminar el servicio "${nombre}"?`)) return
     try {
@@ -169,9 +197,8 @@ const ServiciosList: React.FC = () => {
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[#7a5b4c]">Gestión de Servicios</h1>
                   <p className="text-[#7a5b4c]/70 text-sm sm:text-base">
-                    {searchTerm
-                      ? `${serviciosFiltrados.length} de ${servicios.length} servicios`
-                      : `${servicios.length} servicios disponibles`}
+                    {filteredServicios.length} servicios{" "}
+                    {filteredServicios.length !== servicios.length && `de ${servicios.length} total`}
                   </p>
                 </div>
               </div>
@@ -224,7 +251,7 @@ const ServiciosList: React.FC = () => {
 
         {/* Contenido principal */}
         <AnimatePresence mode="wait">
-          {serviciosFiltrados.length === 0 ? (
+          {filteredServicios.length === 0 ? (
             <motion.div
               key="empty"
               initial={{ opacity: 0, y: 20 }}
@@ -296,7 +323,7 @@ const ServiciosList: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {serviciosFiltrados.map((servicio, index) => (
+                          {paginatedServicios.map((servicio, index) => (
                             <motion.tr
                               key={servicio.id}
                               initial={{ opacity: 0, x: -20 }}
@@ -502,6 +529,17 @@ const ServiciosList: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Componente de paginación reutilizable */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredServicios.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          itemName="servicios"
+          itemsPerPageOptions={[4, 8, 16, 32]}
+        />
       </div>
     </div>
   )

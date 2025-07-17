@@ -30,6 +30,8 @@ import {
   AlertCircle,
   Layers,
 } from "lucide-react"
+import Pagination from "@/components/pagination"
+import { usePagination } from "@/hooks/use-pagination"
 
 interface Sector {
   id: number
@@ -46,10 +48,24 @@ interface Sucursal {
 const SectoresList: React.FC = () => {
   const [sectores, setSectores] = useState<Sector[]>([])
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
+  const [filteredSectores, setFilteredSectores] = useState<Sector[]>([])
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const navigate = useNavigate()
+
+  // Hook de paginación
+  const {
+    currentPage,
+    itemsPerPage,
+    paginatedData: paginatedSectores,
+    setCurrentPage,
+    setItemsPerPage,
+    resetToFirstPage,
+  } = usePagination({
+    data: filteredSectores,
+    initialItemsPerPage: 12,
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +74,7 @@ const SectoresList: React.FC = () => {
         const [sectoresRes, sucursalesRes] = await Promise.all([axios.get("/api/Sector"), axios.get("/api/Sucursal")])
         setSucursales(sucursalesRes.data)
         setSectores(sectoresRes.data)
+        setFilteredSectores(sectoresRes.data)
       } catch {
         setError("Error al cargar sectores o sucursales")
       } finally {
@@ -66,6 +83,18 @@ const SectoresList: React.FC = () => {
     }
     fetchData()
   }, [])
+
+  // Filtrar sectores
+  useEffect(() => {
+    const filtered = sectores.filter(
+      (sector) =>
+        sector.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (sector.descripcion && sector.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        getSucursalNombre(sector.sucursalId).toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+    setFilteredSectores(filtered)
+    resetToFirstPage()
+  }, [sectores, searchTerm, resetToFirstPage])
 
   const getSucursalNombre = (sucursalId: number) => {
     if (!sucursalId || sucursalId === 0) return "Sin sucursal"
@@ -86,16 +115,8 @@ const SectoresList: React.FC = () => {
     }
   }
 
-  // Filtrar sectores basado en el término de búsqueda
-  const sectoresFiltrados = sectores.filter(
-    (sector) =>
-      sector.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sector.descripcion && sector.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      getSucursalNombre(sector.sucursalId).toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
   // Ordenar sectores por sucursal
-  const sectoresOrdenados = sectoresFiltrados.sort((a, b) => {
+  const sectoresOrdenados = paginatedSectores.sort((a, b) => {
     const sucursalA = getSucursalNombre(a.sucursalId)
     const sucursalB = getSucursalNombre(b.sucursalId)
 
@@ -139,9 +160,8 @@ const SectoresList: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-bold text-[#6d4c41]">Gestión de Sectores</h1>
                 <p className="text-[#8d6e63]">
-                  {searchTerm
-                    ? `${sectoresOrdenados.length} de ${sectores.length} sectores`
-                    : `${sectores.length} sectores registrados`}
+                  {filteredSectores.length} sectores{" "}
+                  {filteredSectores.length !== sectores.length && `de ${sectores.length} total`}
                 </p>
               </div>
             </div>
@@ -188,7 +208,7 @@ const SectoresList: React.FC = () => {
 
         {/* Contenido principal */}
         <AnimatePresence mode="wait">
-          {sectoresOrdenados.length === 0 ? (
+          {filteredSectores.length === 0 ? (
             <motion.div
               key="empty"
               initial={{ opacity: 0, y: 20 }}
@@ -322,6 +342,17 @@ const SectoresList: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Componente de paginación reutilizable */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredSectores.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          itemName="sectores"
+          itemsPerPageOptions={[6, 12, 24, 48]}
+        />
       </div>
     </div>
   )
