@@ -2,16 +2,17 @@
 
 import type React from "react"
 import { Button } from "@/components/ui/button"
-import { Grid3X3, List } from "lucide-react"
+import { List, Grid3X3 } from "lucide-react"
 
 interface ViewToggleProps {
   viewMode: "table" | "grid"
   onViewModeChange: (mode: "table" | "grid") => void
+  className?: string
 }
 
-const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewModeChange }) => {
+const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewModeChange, className = "" }) => {
   return (
-    <div className="flex items-center gap-1 bg-[#f8f0ec] rounded-xl p-1 border border-[#e1cfc0]">
+    <div className={`flex items-center gap-1 bg-[#f8f0ec] rounded-xl p-1 border border-[#e1cfc0] ${className}`}>
       <Button
         variant={viewMode === "table" ? "default" : "ghost"}
         size="sm"

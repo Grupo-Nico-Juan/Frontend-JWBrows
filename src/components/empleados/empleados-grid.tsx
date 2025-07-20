@@ -52,9 +52,13 @@ const EmpleadosGrid: React.FC<EmpleadosGridProps> = ({
           <Card className="bg-white/90 backdrop-blur-sm border border-[#e1cfc0] hover:shadow-xl transition-all duration-300 group">
             <CardContent className="p-6">
               <div className="text-center mb-4">
-                <div className="mx-auto mb-3">
-                  <EmpleadoAvatar nombre={emp.nombre} apellido={emp.apellido} color={emp.color} size="lg" />
-                </div>
+                <EmpleadoAvatar
+                  nombre={emp.nombre}
+                  apellido={emp.apellido}
+                  color={emp.color}
+                  size="lg"
+                  className="mx-auto mb-3 shadow-lg"
+                />
                 <h3 className="font-semibold text-[#7a5b4c] text-lg">
                   {emp.nombre} {emp.apellido}
                 </h3>

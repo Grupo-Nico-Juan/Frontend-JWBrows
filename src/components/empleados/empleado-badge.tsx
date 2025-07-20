@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge"
 
 interface EmpleadoBadgeProps {
   cargo: string
+  className?: string
 }
 
-const EmpleadoBadge: React.FC<EmpleadoBadgeProps> = ({ cargo }) => {
+const EmpleadoBadge: React.FC<EmpleadoBadgeProps> = ({ cargo, className = "" }) => {
   const getCargoColor = (cargo: string) => {
     const colors = {
       Administrador: "bg-red-100 text-red-800",
@@ -21,7 +22,7 @@ const EmpleadoBadge: React.FC<EmpleadoBadgeProps> = ({ cargo }) => {
     return colors[cargo as keyof typeof colors] || colors.default
   }
 
-  return <Badge className={getCargoColor(cargo)}>{cargo}</Badge>
+  return <Badge className={`${getCargoColor(cargo)} ${className}`}>{cargo}</Badge>
 }
 
 export default EmpleadoBadge

@@ -5,17 +5,15 @@ import { useEffect, useState } from "react"
 import axios from "../api/AxiosInstance"
 import { useAuth } from "../context/AuthContext"
 import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { AnimatePresence } from "framer-motion"
 import { Users, Plus } from "lucide-react"
-import { usePagination } from "@/hooks/use-pagination"
+import { AnimatePresence } from "framer-motion"
 
 // Componentes reutilizables
 import PageLayout from "@/components/common/page-layout"
+import PageHeader from "@/components/common/page-header"
 import AnimatedCard from "@/components/common/animated-card"
 import LoadingSpinner from "@/components/common/loading-spinner"
 import ErrorAlert from "@/components/common/error-alert"
-import PageHeader from "@/components/common/page-header"
 import SearchInput from "@/components/common/search-input"
 import FilterSelect from "@/components/common/filter-select"
 import ViewToggle from "@/components/common/view-toggle"
@@ -23,6 +21,7 @@ import EmptyState from "@/components/common/empty-state"
 import EmpleadosTable from "@/components/empleados/empleados-table"
 import EmpleadosGrid from "@/components/empleados/empleados-grid"
 import Pagination from "@/components/pagination"
+import { usePagination } from "@/hooks/use-pagination"
 
 interface Empleado {
   id: number
@@ -84,6 +83,7 @@ const EmpleadosList: React.FC = () => {
   // Filtrar empleados y resetear paginación cuando cambian los filtros
   useEffect(() => {
     let filtered = empleados
+
     // Filtro por búsqueda
     if (searchTerm) {
       filtered = filtered.filter(
@@ -93,10 +93,12 @@ const EmpleadosList: React.FC = () => {
           emp.cargo.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
+
     // Filtro por cargo
     if (selectedCargo !== "todos") {
       filtered = filtered.filter((emp) => emp.cargo === selectedCargo)
     }
+
     setFilteredEmpleados(filtered)
     // Solo resetear si realmente cambió el filtro
     if (searchTerm || selectedCargo !== "todos") {
@@ -114,14 +116,35 @@ const EmpleadosList: React.FC = () => {
     }
   }
 
-  // Obtener cargos únicos
+  // Obtener cargos únicos para el filtro
   const cargosUnicos = Array.from(new Set(empleados.map((emp) => emp.cargo)))
 
-  // Handlers para acciones de empleados
-  const handleEdit = (id: number) => navigate(`/empleados/editar/${id}`)
-  const handleHabilidades = (id: number) => navigate(`/empleados/${id}/habilidades`)
-  const handleSectores = (id: number) => navigate(`/empleados/${id}/sectores`)
-  const handlePeriodos = (id: number) => navigate(`/periodos-laborales?empleadaId=${id}`)
+  // Preparar opciones para el filtro de cargos
+  const cargoOptions = [
+    { value: "todos", label: "Todos los cargos" },
+    ...cargosUnicos.map((cargo) => ({ value: cargo, label: cargo })),
+  ]
+
+  // Handlers para las acciones de empleados
+  const handleEdit = (id: number) => {
+    navigate(`/empleados/editar/${id}`)
+  }
+
+  const handleHabilidades = (id: number) => {
+    navigate(`/empleados/${id}/habilidades`)
+  }
+
+  const handleSectores = (id: number) => {
+    navigate(`/empleados/${id}/sectores`)
+  }
+
+  const handlePeriodos = (id: number) => {
+    navigate(`/periodos-laborales?empleadaId=${id}`)
+  }
+
+  const handleNewEmpleado = () => {
+    navigate("/empleados/nuevo")
+  }
 
   if (loading) {
     return <LoadingSpinner message="Cargando empleados..." />
@@ -130,35 +153,34 @@ const EmpleadosList: React.FC = () => {
   return (
     <PageLayout>
       {/* Header */}
-      <AnimatedCard direction="down">
-        <PageHeader
-          icon={<Users className="h-6 w-6 text-white" />}
-          title="Gestión de Empleados"
-          subtitle={`${filteredEmpleados.length} empleados${
-            filteredEmpleados.length !== empleados.length ? ` de ${empleados.length} total` : ""
-          }`}
-          actions={
-            <Button
-              onClick={() => navigate("/empleados/nuevo")}
-              className="bg-gradient-to-r from-[#7a5b4c] to-[#a37e63] hover:from-[#6b4d3e] hover:to-[#8f6b50] text-white shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Empleado
-            </Button>
-          }
-        />
-      </AnimatedCard>
+      <PageHeader
+        title="Gestión de Empleados"
+        subtitle={`${filteredEmpleados.length} empleados${
+          filteredEmpleados.length !== empleados.length ? ` de ${empleados.length} total` : ""
+        }`}
+        icon={Users}
+        actionButton={{
+          label: "Nuevo Empleado",
+          onClick: handleNewEmpleado,
+          icon: Plus,
+        }}
+      />
 
       {/* Filtros y búsqueda */}
       <AnimatedCard delay={0.1}>
-        <div className="flex flex-col lg:flex-row gap-4 items-center">
-          <SearchInput placeholder="Buscar por nombre o cargo..." value={searchTerm} onChange={setSearchTerm} />
+        <div className="flex flex-col lg:flex-row gap-4 items-center p-4">
+          {/* Búsqueda */}
+          <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por nombre o cargo..." />
+
+          {/* Filtro por cargo */}
           <FilterSelect
             value={selectedCargo}
             onChange={setSelectedCargo}
-            options={cargosUnicos.map((cargo) => ({ value: cargo, label: cargo }))}
-            placeholder="Todos los cargos"
+            options={cargoOptions}
+            placeholder="Filtrar por cargo"
           />
+
+          {/* Toggle de vista */}
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
       </AnimatedCard>
@@ -170,7 +192,7 @@ const EmpleadosList: React.FC = () => {
       <AnimatePresence mode="wait">
         {filteredEmpleados.length === 0 ? (
           <EmptyState
-            icon={<Users className="h-16 w-16" />}
+            icon={Users}
             title={searchTerm || selectedCargo !== "todos" ? "No se encontraron empleados" : "No hay empleados"}
             description={
               searchTerm || selectedCargo !== "todos"
@@ -181,8 +203,8 @@ const EmpleadosList: React.FC = () => {
               !searchTerm && selectedCargo === "todos"
                 ? {
                     label: "Agregar Empleado",
-                    onClick: () => navigate("/empleados/nuevo"),
-                    icon: <Plus className="h-4 w-4 mr-2" />,
+                    onClick: handleNewEmpleado,
+                    icon: Plus,
                   }
                 : undefined
             }
@@ -208,15 +230,17 @@ const EmpleadosList: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Paginación */}
-      <Pagination
-        currentPage={currentPage}
-        totalItems={filteredEmpleados.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onItemsPerPageChange={setItemsPerPage}
-        itemName="empleados"
-      />
+      {/* Componente de paginación reutilizable */}
+      {filteredEmpleados.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredEmpleados.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          itemName="empleados"
+        />
+      )}
     </PageLayout>
   )
 }
