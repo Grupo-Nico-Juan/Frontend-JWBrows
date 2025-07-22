@@ -29,6 +29,7 @@ import {
   Loader2,
   AlertCircle,
   Star,
+  Image,
   Search,
   X,
 } from "lucide-react"
@@ -406,6 +407,13 @@ const ServiciosList: React.FC = () => {
                                         <Star className="h-4 w-4 mr-2" />
                                         Extras ({extrasCount[servicio.id] ?? 0})
                                       </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => navigate(`/servicios/${servicio.id}/imagenes`)}
+                                        className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                      >
+                                        <Image className="h-4 w-4 mr-2" />
+                                        Imágenes
+                                      </DropdownMenuItem>
                                       <DropdownMenuSeparator className="bg-[#e1cfc0]" />
                                       <DropdownMenuItem
                                         onClick={() => handleDelete(servicio.id, servicio.nombre)}
@@ -486,6 +494,13 @@ const ServiciosList: React.FC = () => {
                                   >
                                     <Star className="h-4 w-4 mr-2" />
                                     Extras ({extrasCount[servicio.id] ?? 0})
+                                  </DropdownMenuItem>
+                                   <DropdownMenuItem
+                                    onClick={() => navigate(`/servicios/${servicio.id}/imagenes`)}
+                                    className="text-[#7a5b4c] hover:bg-[#fdf6f1] rounded-lg mx-1 my-1"
+                                  >
+                                    <Image className="h-4 w-4 mr-2" />
+                                    Imágenes
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator className="bg-[#e1cfc0]" />
                                   <DropdownMenuItem

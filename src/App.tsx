@@ -9,6 +9,7 @@ import AsignarTurno from './pages/AsignarTurno';
 import MainLayout from './pages/MainLayout';
 import ServiciosList from './pages/Servicios/ServiciosList';
 import ServicioForm from './pages/Servicios/ServicioForm';
+import ServicioImagenes from './pages/Servicios/ServicioImagenes';
 import SucursalesList from './pages/Sucursales/SucursalesList';
 import SucursalForm from './pages/Sucursales/SucursalForm';
 import SectoresList from './pages/Sectores/SectoresList';
@@ -58,6 +59,7 @@ function App() {
         <Route path="/servicios/:id/habilidades" element={<AsignarHabilidadesServicio />} />
         <Route path="/servicios/:id/sectores" element={<AsignarSectoresServicio />} />
         <Route path="/servicios/:id/extras" element={<AsignarExtrasServicio />} />
+        <Route path="/servicios/:id/imagenes" element={<ServicioImagenes />} />
         <Route path="/sucursales" element={<SucursalesList />} />
         <Route path="/sucursales/nueva" element={<SucursalForm />} />
         <Route path="/sucursales/editar/:id" element={<SucursalForm />} />
