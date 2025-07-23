@@ -114,6 +114,12 @@ export const NavBar: React.FC = () => {
         icon: IconTool,
         description: "Competencias del personal",
       },
+      {
+        title: "Licencias Multiples",
+        path: "/licencias-multiples",
+        icon: IconTool,
+        description: "Competencias del personal",
+      },
     ],
     reportes: [
       {
