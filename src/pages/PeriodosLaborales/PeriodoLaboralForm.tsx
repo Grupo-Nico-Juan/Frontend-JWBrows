@@ -185,18 +185,15 @@ const PeriodoLaboralForm: React.FC = () => {
   if (isLoadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#fdf6f1] via-[#f8f0e8] to-[#f3e9dc] px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
+        <AnimatePresence>
+          <MotionWrapper animation="fadeIn" className="space-y-6">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <div className="w-8 h-8 border-4 border-[#7a5b4c] border-t-transparent rounded-full animate-spin" />
           </div>
           <p className="text-[#7a5b4c] font-medium text-base sm:text-lg">Cargando formulario...</p>
           <p className="text-[#7a5b4c]/60 text-sm mt-2">Esto puede tomar unos segundos</p>
-        </motion.div>
+          </MotionWrapper>
+        </AnimatePresence>
       </div>
     )
   }

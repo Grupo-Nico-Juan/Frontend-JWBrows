@@ -1,11 +1,12 @@
 "use client"
 
 import type React from "react"
-import MotionWrapper from "@/components/animations/motion-wrapper"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, User, Phone } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Users, User, Phone, Plus } from "lucide-react"
 
 interface Cliente {
   id: number
@@ -32,6 +33,7 @@ interface ClienteEmpleadaSectionProps {
   loadingEmpleadas: boolean
   onClienteChange: (value: string) => void
   onEmpleadaChange: (value: string) => void
+  onNuevoCliente: () => void
 }
 
 const ClienteEmpleadaSection: React.FC<ClienteEmpleadaSectionProps> = ({
@@ -43,9 +45,14 @@ const ClienteEmpleadaSection: React.FC<ClienteEmpleadaSectionProps> = ({
   loadingEmpleadas,
   onClienteChange,
   onEmpleadaChange,
+  onNuevoCliente,
 }) => {
   return (
-    <MotionWrapper animation="slideLeft" delay={0.3}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+    >
       <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
         <CardHeader>
           <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
@@ -60,24 +67,36 @@ const ClienteEmpleadaSection: React.FC<ClienteEmpleadaSectionProps> = ({
                 <User className="h-4 w-4" />
                 Cliente
               </Label>
-              <Select value={clienteId === 0 ? "" : String(clienteId)} onValueChange={onClienteChange}>
-                <SelectTrigger className="border-[#e0d6cf] focus:border-[#a1887f]">
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientes.map((cliente) => (
-                    <SelectItem key={cliente.id} value={String(cliente.id)}>
-                      <div className="flex items-center gap-2">
-                        <span>
-                          {cliente.nombre} {cliente.apellido}
-                        </span>
-                        <Phone className="h-3 w-3 text-[#8d6e63]" />
-                        <span className="text-[#8d6e63]">{cliente.telefono}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={clienteId === 0 ? "" : String(clienteId)} onValueChange={onClienteChange}>
+                  <SelectTrigger className="border-[#e0d6cf] focus:border-[#a1887f] flex-1">
+                    <SelectValue placeholder="Seleccionar cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.id} value={String(cliente.id)}>
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {cliente.nombre} {cliente.apellido}
+                          </span>
+                          <Phone className="h-3 w-3 text-[#8d6e63]" />
+                          <span className="text-[#8d6e63]">{cliente.telefono}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onNuevoCliente}
+                  className="border-[#e0d6cf] text-[#8d6e63] hover:bg-[#f3e5e1] hover:text-[#6d4c41] px-3 bg-transparent"
+                  title="Crear nuevo cliente"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -106,7 +125,7 @@ const ClienteEmpleadaSection: React.FC<ClienteEmpleadaSectionProps> = ({
           </div>
         </CardContent>
       </Card>
-    </MotionWrapper>
+    </motion.div>
   )
 }
 
