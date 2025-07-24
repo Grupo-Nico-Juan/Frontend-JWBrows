@@ -63,7 +63,7 @@ const ServiciosSection: React.FC<ServiciosSectionProps> = ({
   const { duracionTotal, precioTotal } = calcularTotales()
 
   return (
-    <MotionWrapper animation="slideLeft" delay={0.3}>
+    <MotionWrapper animation="slideLeft"  delay={0.3}>
       <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
         <CardHeader>
           <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
