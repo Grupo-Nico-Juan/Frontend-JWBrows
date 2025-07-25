@@ -136,7 +136,9 @@ const ServicioForm: React.FC = () => {
 
     try {
       if (editando && id) {
-        await axios.put(`/api/Servicio/${id}`, form)
+        // Agrega el id al body
+        const payload = { ...form, id: Number(id) }
+        await axios.put(`/api/Servicio/${id}`, payload)
         toast.success("Servicio actualizado correctamente")
       } else {
         await axios.post("/api/Servicio", form)
