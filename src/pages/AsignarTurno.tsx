@@ -17,6 +17,7 @@ import UbicacionSection from "@/components/turnos/ubicacion-section"
 import ClienteEmpleadaSection from "@/components/turnos/cliente-empleada-section"
 import ServiciosSection from "@/components/turnos/servicios-section"
 import HorariosDisponibles from "@/components/turnos/horarios-disponibles"
+import NuevoClienteModal from "@/components/turnos/nuevo-cliente-modal"
 
 interface Empleada {
   id: number
@@ -79,6 +80,13 @@ interface HorarioOcupado {
   fechaHoraFin: string
 }
 
+interface NuevoClienteData {
+  nombre: string
+  apellido: string
+  telefono: string
+  email?: string
+}
+
 const AsignarTurno: React.FC = () => {
   const navigate = useNavigate()
   const [empleadas, setEmpleadas] = useState<Empleada[]>([])
@@ -110,6 +118,10 @@ const AsignarTurno: React.FC = () => {
   const [initialLoading, setInitialLoading] = useState(true)
   const [horarioValido, setHorarioValido] = useState<boolean | null>(null)
   const [error, setError] = useState<string>("")
+
+  // Estados para el modal de nuevo cliente
+  const [modalClienteOpen, setModalClienteOpen] = useState(false)
+  const [loadingNuevoCliente, setLoadingNuevoCliente] = useState(false)
 
   // Cargar datos iniciales (sucursales y clientes)
   useEffect(() => {
@@ -349,6 +361,43 @@ const AsignarTurno: React.FC = () => {
     )
   }
 
+  // Manejar creación de nuevo cliente
+  const handleNuevoCliente = () => {
+    setModalClienteOpen(true)
+  }
+
+  const handleCrearCliente = async (clienteData: NuevoClienteData) => {
+    setLoadingNuevoCliente(true)
+    try {
+      const requestData = {
+        nombre: clienteData.nombre,
+        apellido: clienteData.apellido,
+        telefono: clienteData.telefono,
+        email: clienteData.email || "",
+      }
+
+      const response = await axios.post<Cliente>("/api/Cliente/registrar-sin-cuenta", requestData)
+      const nuevoCliente = response.data
+
+      // Agregar el nuevo cliente a la lista
+      setClientes((prev) => [...prev, nuevoCliente])
+
+      // Seleccionar automáticamente el nuevo cliente
+      setFormData((prev) => ({ ...prev, clienteId: nuevoCliente.id }))
+
+      // Cerrar modal
+      setModalClienteOpen(false)
+
+      toast.success(`Cliente ${nuevoCliente.nombre} ${nuevoCliente.apellido} creado exitosamente`)
+    } catch (err: any) {
+      console.error("Error creando cliente:", err)
+      toast.error(err.response?.data?.message || "Error al crear el cliente")
+      throw err // Re-lanzar para que el modal maneje el error
+    } finally {
+      setLoadingNuevoCliente(false)
+    }
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError("")
@@ -530,6 +579,7 @@ const AsignarTurno: React.FC = () => {
             loadingEmpleadas={loadingEmpleadas}
             onClienteChange={(value) => setFormData({ ...formData, clienteId: Number.parseInt(value) })}
             onEmpleadaChange={(value) => setFormData({ ...formData, empleadaId: Number.parseInt(value) })}
+            onNuevoCliente={handleNuevoCliente}
           />
 
           {/* Servicios */}
@@ -593,6 +643,18 @@ const AsignarTurno: React.FC = () => {
             </CardContent>
           </Card>
         </form>
+
+        {/* Modal para crear nuevo cliente */}
+        <NuevoClienteModal
+          isOpen={modalClienteOpen}
+          onClose={() => setModalClienteOpen(false)}
+          onClienteCreado={(cliente) => {
+            setClientes((prev) => [...prev, cliente])
+            setFormData((prev) => ({ ...prev, clienteId: cliente.id }))
+          }}
+          isLoading={loadingNuevoCliente}
+          onSubmit={handleCrearCliente}
+        />
       </div>
     </div>
   )

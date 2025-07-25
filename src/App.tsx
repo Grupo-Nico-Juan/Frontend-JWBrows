@@ -35,6 +35,7 @@ import SeleccionFechaHoraEmpleada from './pages/Cliente/seleccionFechaYHoraEmple
 import TurnosEmpleadasSector from './pages/Empleado/TurnosEmpleadasSector';
 import SeleccionSucursalSector from './pages/Empleado/SeleccionSucursalSector';
 import CalendarioTurnosAdmin from './pages/Admin/CalendarioTurnosAdmin';
+import LicenciasMasivas from './pages/PeriodosLaborales/LicenciasMasivas';
 
 function App() {
 
@@ -72,6 +73,7 @@ function App() {
         <Route path="/periodos-laborales" element={<PeriodosLaboralesList />} />
         <Route path="/periodos-laborales/nuevo" element={<PeriodoLaboralForm />} />
         <Route path="/periodos-laborales/editar/:id" element={<PeriodoLaboralForm />} />
+        <Route path="/licencias-multiples" element={<LicenciasMasivas />} />
         <Route path="/" element={<SeleccionSucursal/>} />
         <Route path="/reserva/servicio" element={<SeleccionServicio />} />
         <Route path="/reserva/fecha-hora" element={<SeleccionFechaHora />} />

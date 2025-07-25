@@ -235,7 +235,6 @@ const EmpleadoForm: React.FC = () => {
           icon={MapPin}
           disabled={isLoading}
           delay={0.5}
-          direction="left"
         />
 
         {/* Mensaje de error */}

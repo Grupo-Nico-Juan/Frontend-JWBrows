@@ -65,7 +65,13 @@ const FechaHoraSection: React.FC<FechaHoraSectionProps> = ({
                       onDateChange(date)
                       onCalendarOpenChange(false)
                     }}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) => {
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      const compareDate = new Date(date)
+                      compareDate.setHours(0, 0, 0, 0)
+                      return compareDate < today
+                    }}
                   />
                 </PopoverContent>
               </Popover>

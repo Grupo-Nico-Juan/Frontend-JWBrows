@@ -28,7 +28,7 @@ const HorariosDisponibles: React.FC<HorariosDisponiblesProps> = ({ horarios, onT
   if (horarios.length === 0) return null
 
   return (
-    <MotionWrapper animation="slideLeft" delay={0.3}>
+    <MotionWrapper animation="slideLeft"  delay={0.3}>
       <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
         <CardHeader>
           <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">

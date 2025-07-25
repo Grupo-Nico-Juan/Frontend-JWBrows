@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { motion } from "framer-motion"
-import { Users, Calendar, Scissors, Building, MapPin, Brain, Clock, BarChart3, Settings } from "lucide-react"
+import { Users, Calendar, Scissors, Building, MapPin, Brain, Clock, BarChart3, Settings, UserX } from "lucide-react"
 import MenuHeader from "@/components/menu/menu-header"
 import MenuSection from "@/components/menu/menu-section"
 import MenuOptionCard from "@/components/menu/menu-option-card"
@@ -28,6 +28,13 @@ const adminSections = [
         icon: Calendar,
         description: "Programar y administrar citas",
         color: "bg-green-500",
+      },
+      {
+        label: "Licencias Multiples",
+        path: "/licencias-multiples",
+        icon: UserX,
+        description: "Asignar licencias por sucursal",
+        color: "bg-red-500",
       },
     ],
   },
@@ -136,7 +143,6 @@ const MenuAdmin: React.FC = () => {
             </MenuSection>
           ))}
         </div>
-
 
         {/* Footer */}
         <MotionWrapper animation="fadeIn" delay={1} duration={0.6} className="mt-8 text-center">
