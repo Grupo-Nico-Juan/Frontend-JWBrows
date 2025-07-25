@@ -1,16 +1,20 @@
 "use client"
+
 import type React from "react"
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import axios from "../../api/AxiosInstance"
 import { useNavigate, useParams } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { motion } from "framer-motion"
 import { toast } from "sonner"
-import { ArrowLeft, Building2, MapPin, Phone, FileText, Loader2, AlertCircle, Save, X, Store } from "lucide-react"
+import { Building2, MapPin, Phone, Store } from "lucide-react"
+import PageLayout from "@/components/common/page-layout"
+import LoadingSpinner from "@/components/common/loading-spinner"
+import ErrorAlert from "@/components/common/error-alert"
+import FormHeader from "@/components/forms/form-header"
+import FormSection from "@/components/forms/form-section"
+import FormInputField from "@/components/forms/form-input-field"
+import FormTextareaField from "@/components/forms/form-textarea-field"
+import FormButtons from "@/components/forms/form-buttons"
+import MotionWrapper from "@/components/animations/motion-wrapper"
 
 interface SucursalFormData {
   nombre: string
@@ -40,7 +44,7 @@ const validarSucursal = (form: SucursalFormData): Partial<Record<keyof SucursalF
 
   if (!form.telefono.trim()) {
     errores.telefono = "El teléfono es requerido"
-  } else if (!/^[\d\s\-+$$$$]+$/.test(form.telefono)) {
+  } else if (!/^[\d\s\-+()]+$/.test(form.telefono)) {
     errores.telefono = "El teléfono solo puede contener números, espacios, guiones y paréntesis"
   } else if (form.telefono.replace(/\D/g, "").length < 7) {
     errores.telefono = "El teléfono debe tener al menos 7 dígitos"
@@ -88,7 +92,6 @@ const SucursalForm: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
     const nuevosErrores = validarSucursal(form)
     setErrores(nuevosErrores)
 
@@ -117,183 +120,82 @@ const SucursalForm: React.FC = () => {
     }
   }
 
+  const handleCancel = () => {
+    navigate("/sucursales")
+  }
+
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] flex items-center justify-center">
-        <Card className="p-8 bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-[#a1887f]" />
-            <span className="text-[#6d4c41] font-medium">Cargando...</span>
-          </div>
-        </Card>
-      </div>
-    )
+    return <LoadingSpinner message="Cargando..." />
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] p-6">
+    <PageLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white/80 backdrop-blur-sm rounded-lg border border-[#e0d6cf] p-6"
-        >
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/sucursales")}
-              className="text-[#8d6e63] hover:text-[#6d4c41] hover:bg-[#f8f0ec]"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#a1887f] rounded-lg">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-[#6d4c41]">{editando ? "Editar Sucursal" : "Nueva Sucursal"}</h1>
-                <p className="text-[#8d6e63]">
-                  {editando ? "Modifica los datos de la sucursal" : "Completa la información de la nueva sucursal"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <FormHeader
+          title={editando ? "Editar Sucursal" : "Nueva Sucursal"}
+          subtitle={editando ? "Modifica los datos de la sucursal" : "Completa la información de la nueva sucursal"}
+          icon={<Building2 className="h-6 w-6 text-white" />}
+          onBack={handleCancel}
+          isLoading={submitting}
+        />
 
-        {/* Error general */}
         {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3"
-          >
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <span className="text-red-700">{error}</span>
-          </motion.div>
+          <MotionWrapper animation="fadeIn" delay={0.1}>
+            <ErrorAlert message={error} onDismiss={() => setError("")} />
+          </MotionWrapper>
         )}
 
-        {/* Formulario */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
+        <MotionWrapper animation="slideLeft" delay={0.2}>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Información básica */}
-            <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#6d4c41]">
-                  <Store className="h-5 w-5" />
-                  Información de la Sucursal
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="nombre" className="text-[#6d4c41] font-medium flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    Nombre de la Sucursal
-                  </Label>
-                  <Input
-                    id="nombre"
-                    name="nombre"
-                    placeholder="Ej: Sucursal Centro"
-                    value={form.nombre}
-                    onChange={handleChange}
-                    className={`border-[#e0d6cf] focus:border-[#a1887f] ${
-                      errores.nombre ? "border-red-300 focus:border-red-400" : ""
-                    }`}
-                  />
-                  {errores.nombre && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errores.nombre}
-                    </p>
-                  )}
-                </div>
+            <FormSection title="Información de la Sucursal" icon={<Store className="h-5 w-5" />}>
+              <FormInputField
+                id="nombre"
+                name="nombre"
+                label="Nombre de la Sucursal"
+                placeholder="Ej: Sucursal Centro"
+                value={form.nombre}
+                onChange={handleChange}
+                icon={<Building2 className="h-4 w-4" />}
+                error={errores.nombre}
+                disabled={submitting}
+              />
 
-                <div className="space-y-2">
-                  <Label htmlFor="direccion" className="text-[#6d4c41] font-medium flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Dirección Completa
-                  </Label>
-                  <Textarea
-                    id="direccion"
-                    name="direccion"
-                    placeholder="Ej: Av. Principal 123, Centro, Ciudad"
-                    value={form.direccion}
-                    onChange={handleChange}
-                    rows={3}
-                    className={`border-[#e0d6cf] focus:border-[#a1887f] resize-none ${
-                      errores.direccion ? "border-red-300 focus:border-red-400" : ""
-                    }`}
-                  />
-                  {errores.direccion && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errores.direccion}
-                    </p>
-                  )}
-                </div>
+              <FormTextareaField
+                id="direccion"
+                name="direccion"
+                label="Dirección Completa"
+                placeholder="Ej: Av. Principal 123, Centro, Ciudad"
+                value={form.direccion}
+                onChange={handleChange}
+                icon={<MapPin className="h-4 w-4" />}
+                error={errores.direccion}
+                rows={3}
+                disabled={submitting}
+              />
 
-                <div className="space-y-2">
-                  <Label htmlFor="telefono" className="text-[#6d4c41] font-medium flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Teléfono de Contacto
-                  </Label>
-                  <Input
-                    id="telefono"
-                    name="telefono"
-                    placeholder="Ej: +54 11 1234-5678"
-                    value={form.telefono}
-                    onChange={handleChange}
-                    className={`border-[#e0d6cf] focus:border-[#a1887f] ${
-                      errores.telefono ? "border-red-300 focus:border-red-400" : ""
-                    }`}
-                  />
-                  {errores.telefono && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errores.telefono}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+              <FormInputField
+                id="telefono"
+                name="telefono"
+                label="Teléfono de Contacto"
+                placeholder="Ej: +54 11 1234-5678"
+                value={form.telefono}
+                onChange={handleChange}
+                icon={<Phone className="h-4 w-4" />}
+                error={errores.telefono}
+                disabled={submitting}
+              />
+            </FormSection>
 
-            
-            {/* Botones de acción */}
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/sucursales")}
-                className="border-[#e0d6cf] text-[#6d4c41] hover:bg-[#f8f0ec]"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={submitting} className="bg-[#a1887f] hover:bg-[#8d6e63] text-white">
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {editando ? "Guardar cambios" : "Crear sucursal"}
-                  </>
-                )}
-              </Button>
-            </div>
+            <FormButtons
+              onCancel={handleCancel}
+              isLoading={submitting}
+              isEditing={editando}
+              disabled={Object.keys(errores).length > 0}
+            />
           </form>
-        </motion.div>
+        </MotionWrapper>
       </div>
-    </div>
+    </PageLayout>
   )
 }
 

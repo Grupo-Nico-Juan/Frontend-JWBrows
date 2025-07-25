@@ -191,7 +191,7 @@ html, body, #root {
 .btn-beish {
     @apply bg-[#f2e4d9] text-[#6e4b3a] hover:bg-[#e6d4c4] transition-colors duration-200;
 }
-/*
+
 .scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -199,4 +199,3 @@ html, body, #root {
 .scrollbar-hidden::-webkit-scrollbar {
   display: none; 
 }
-*/
