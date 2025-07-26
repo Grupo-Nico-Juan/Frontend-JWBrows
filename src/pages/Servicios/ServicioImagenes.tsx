@@ -1,4 +1,5 @@
 "use client"
+
 import type React from "react"
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
@@ -6,15 +7,15 @@ import axios from "@/api/AxiosInstance"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { motion } from "framer-motion"
 import { toast } from "sonner"
-import {
-  ArrowLeft,
-  Image as ImageIcon,
-  Trash2,
-  Loader2,
-  Upload,
-} from "lucide-react"
+import { ImageIcon, Trash2, Loader2, Upload } from "lucide-react"
+
+// Componentes reutilizables
+import PageLayout from "@/components/common/page-layout"
+import PageHeader from "@/components/common/page-header"
+import LoadingSpinner from "@/components/common/loading-spinner"
+import ErrorAlert from "@/components/common/error-alert"
+import MotionWrapper from "@/components/animations/motion-wrapper"
 
 interface Imagen {
   id: number
@@ -65,7 +66,7 @@ const ServicioImagenes: React.FC = () => {
     }
   }
 
-const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
     setSelectedFiles(Array.from(files))
@@ -96,7 +97,6 @@ const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (inputRef.current) inputRef.current.value = ""
   }
 
-
   const handleDelete = async (imagenId: number) => {
     if (!window.confirm("¿Eliminar imagen?")) return
     try {
@@ -108,121 +108,129 @@ const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     }
   }
 
+  const handleBack = () => navigate("/servicios")
+
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Cargando...
-      </div>
-    )
+    return <LoadingSpinner message="Cargando imágenes..." />
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdf6f1] to-[#f8f0ec] p-6">
+    <PageLayout>
       <div className="max-w-3xl mx-auto space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-sm rounded-lg border border-[#e0d6cf] p-6"
-        >
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/servicios")}
-              className="text-[#8d6e63] hover:text-[#6d4c41] hover:bg-[#f3e5e1]"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#a1887f] rounded-lg">
-                <ImageIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-[#6d4c41]">Gestión de Imágenes</h1>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          title="Gestión de Imágenes"
+          subtitle="Administra las imágenes del servicio"
+          icon={ImageIcon}
+          actionButton={{
+            label: "Volver",
+            onClick: handleBack,
+          }}
+        />
 
-        <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Subir imágenes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              ref={inputRef}
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-            {previews.length > 0 && (
-              <div className="mt-4 space-y-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {previews.map((url, idx) => (
-                    <img
-                      key={idx}
-                      src={url}
-                      alt="Previsualización"
-                      className="w-full h-32 object-cover rounded"
-                    />
-                  ))}
+        {error && <ErrorAlert message={error} />}
+
+        {/* Sección de subida de imágenes */}
+        <MotionWrapper animation="slideUp">
+          <Card className="bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
+            <CardHeader>
+              <CardTitle className="text-lg text-[#6d4c41] flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Subir imágenes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                ref={inputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={uploading}
+                className="border-[#e0d6cf] focus:border-[#a1887f]"
+              />
+              {previews.length > 0 && (
+                <div className="mt-4 space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {previews.map((url, idx) => (
+                      <MotionWrapper key={idx} animation="fadeIn">
+                        <img
+                          src={url || "/placeholder.svg"}
+                          alt="Previsualización"
+                          className="w-full h-32 object-cover rounded-lg border border-[#e0d6cf]"
+                        />
+                      </MotionWrapper>
+                    ))}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={cancelUpload}
+                      className="border-[#e0d6cf] text-[#8d6e63] hover:bg-[#f3e5e1] hover:text-[#6d4c41] bg-transparent"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={confirmUpload}
+                      disabled={uploading}
+                      className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Subiendo...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Subir
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2">
+              )}
+            </CardContent>
+          </Card>
+        </MotionWrapper>
+
+        {/* Grid de imágenes existentes */}
+        <MotionWrapper animation="slideUp">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {imagenes.map((img, index) => (
+              <MotionWrapper key={img.id} animation="fadeIn">
+                <Card className="relative bg-white/80 backdrop-blur-sm border-[#e0d6cf] overflow-hidden">
+                  <img
+                    src={img.url || "/placeholder.svg"}
+                    alt="Imagen del servicio"
+                    className="w-full h-40 object-cover"
+                  />
                   <Button
+                    size="icon"
                     variant="outline"
-                    onClick={cancelUpload}
-                    className="border-[#e0d6cf] text-[#8d6e63] hover:bg-[#f3e5e1] hover:text-[#6d4c41]"
+                    onClick={() => handleDelete(img.id)}
+                    className="absolute top-2 right-2 bg-white/90 hover:bg-white border-red-200 hover:border-red-300"
                   >
-                    Cancelar
+                    <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
-                  <Button
-                    onClick={confirmUpload}
-                    disabled={uploading}
-                    className="bg-[#a1887f] hover:bg-[#8d6e63] text-white"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Subiendo...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Subir
-                      </>
-                    )}
-                  </Button>
-                </div>
+                </Card>
+              </MotionWrapper>
+            ))}
+          </div>
+        </MotionWrapper>
+
+        {imagenes.length === 0 && !error && (
+          <MotionWrapper animation="fadeIn" >
+            <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-xl rounded-xl p-8 text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-[#7a5b4c]/20 to-[#a37e63]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ImageIcon className="h-8 w-8 text-[#7a5b4c]/60" />
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {error && <p className="text-red-600 text-center">{error}</p>}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {imagenes.map((img) => (
-            <Card key={img.id} className="relative bg-white/80 backdrop-blur-sm border-[#e0d6cf]">
-              <img src={img.url} alt="Imagen del servicio" className="w-full h-40 object-cover rounded-t" />
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => handleDelete(img.id)}
-                className="absolute top-2 right-2 bg-white/80"
-              >
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </Button>
+              <h3 className="text-lg font-semibold text-[#7a5b4c] mb-2">No hay imágenes</h3>
+              <p className="text-[#7a5b4c]/70 mb-4">Sube las primeras imágenes para este servicio</p>
             </Card>
-          ))}
-        </div>
+          </MotionWrapper>
+        )}
       </div>
-    </div>
+    </PageLayout>
   )
 }
 
