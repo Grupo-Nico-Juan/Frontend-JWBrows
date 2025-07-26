@@ -4,6 +4,7 @@ import type React from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertCircle } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface FormInputFieldProps {
   id: string
@@ -16,6 +17,7 @@ interface FormInputFieldProps {
   error?: string
   type?: string
   disabled?: boolean
+  required?: boolean
 }
 
 const FormInputField: React.FC<FormInputFieldProps> = ({
@@ -29,12 +31,14 @@ const FormInputField: React.FC<FormInputFieldProps> = ({
   error,
   type = "text",
   disabled = false,
+  required = false,
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-[#6d4c41] font-medium flex items-center gap-2">
+      <Label htmlFor={id} className="text-sm font-medium text-[#6d4c41] flex items-center gap-2">
         {icon}
         {label}
+        {required && <span className="text-red-500">*</span>}
       </Label>
       <Input
         id={id}
@@ -44,14 +48,21 @@ const FormInputField: React.FC<FormInputFieldProps> = ({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`border-[#e0d6cf] focus:border-[#a1887f] ${error ? "border-red-300 focus:border-red-400" : ""}`}
+        className={`border-[#e0d6cf] focus:border-[#a1887f] ${error ? "border-red-300 focus:border-red-500" : ""}`}
       />
-      {error && (
-        <p className="text-sm text-red-600 flex items-center gap-1">
-          <AlertCircle className="h-3 w-3" />
-          {error}
-        </p>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-2 text-red-600 text-sm"
+          >
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
